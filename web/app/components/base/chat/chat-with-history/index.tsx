@@ -19,6 +19,7 @@ import Loading from '@/app/components/base/loading'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import { checkOrSetAccessToken } from '@/app/components/share/utils'
 import AppUnavailable from '@/app/components/base/app-unavailable'
+import { KnowledgeProvider } from '../../knowledge-sidebar/context'
 
 type ChatWithHistoryProps = {
   className?: string
@@ -179,7 +180,9 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
       currentChatInstanceRef,
       themeBuilder,
     }}>
-      <ChatWithHistory className={className} />
+      <KnowledgeProvider>
+        <ChatWithHistory className={className} />
+      </KnowledgeProvider>
     </ChatWithHistoryContext.Provider>
   )
 }

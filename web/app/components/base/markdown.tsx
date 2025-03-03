@@ -22,6 +22,7 @@ import SVGRenderer from '@/app/components/base/svg-gallery'
 import MarkdownButton from '@/app/components/base/markdown-blocks/button'
 import MarkdownForm from '@/app/components/base/markdown-blocks/form'
 import ThinkBlock from '@/app/components/base/markdown-blocks/think-block'
+import KnowledgeBlock from './knowledge-sidebar/knowledge-block'
 
 // Available language https://github.com/react-syntax-highlighter/react-syntax-highlighter/blob/master/AVAILABLE_LANGUAGES_HLJS.MD
 const capitalizationLanguageNameMap: Record<string, string> = {
@@ -71,6 +72,28 @@ const preprocessThinkTag = (content: string) => {
   return flow([
     (str: string) => str.replace('<think>\n', '<details data-think=true>\n'),
     (str: string) => str.replace('\n</think>', '\n[ENDTHINKFLAG]</details>'),
+  ])(content)
+}
+
+const preprocessKnowledgeTag = (content: string) => {
+  return flow([
+    (str: string) => str.replace(
+      /<knowledge>\s*([\s\S]*?)\s*<\/knowledge>/g,
+      (_, jsonContent) => {
+        try {
+          // Remove any leading/trailing whitespace and normalize JSON string
+          const normalizedJson = jsonContent
+            .replace(/^\s+|\s+$/g, '')  // Remove leading/trailing whitespace
+            .replace(/\n\s*/g, '')      // Remove newlines and spaces after them
+          const items = JSON.parse(normalizedJson)
+          return `<details data-knowledge="true"><summary></summary>${JSON.stringify(items)}</details>`
+        }
+        catch (error) {
+          console.error('Failed to parse knowledge items:', error, jsonContent)
+          return ''
+        }
+      },
+    ),
   ])(content)
 }
 
@@ -240,8 +263,10 @@ const Link = ({ node, ...props }: any) => {
 export function Markdown(props: { content: string; className?: string }) {
   const latexContent = flow([
     preprocessThinkTag,
+    preprocessKnowledgeTag,
     preprocessLaTeX,
   ])(props.content)
+
   return (
     <div className={cn(props.className, 'markdown-body')}>
       <ReactMarkdown
@@ -283,7 +308,28 @@ export function Markdown(props: { content: string; className?: string }) {
           button: MarkdownButton,
           form: MarkdownForm,
           script: ScriptBlock,
-          details: ThinkBlock,
+          details: (props: any) => {
+            if (props['data-think'])
+              return <ThinkBlock {...props} />
+            if (props['data-knowledge']) {
+              try {
+                // Find the content after the summary tag
+                const content = props.children.find((child: any) =>
+                  typeof child === 'string' && child.trim().length > 0,
+                )
+                if (!content) {
+                  console.error('No content found in knowledge block')
+                  return null
+                }
+                const items = JSON.parse(content)
+                return <KnowledgeBlock items={items} isExpandable />
+              } catch (error) {
+                console.error('Failed to parse knowledge items:', error)
+                return null
+              }
+            }
+            return <details {...props} />
+          },
         }}
       >
         {/* Markdown detect has problem. */}

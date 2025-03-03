@@ -27,6 +27,7 @@ import {
 } from '@/service/debug'
 import { useStore as useAppStore } from '@/app/components/app/store'
 import { getLastAnswer, isValidGeneratedAnswer } from '@/app/components/base/chat/utils'
+import { KnowledgeProvider } from '@/app/components/base/knowledge-sidebar/context'
 
 type ChatWrapperProps = {
   showConversationVariableModal: boolean
@@ -115,41 +116,43 @@ const ChatWrapper = forwardRef<ChatWrapperRefType, ChatWrapperProps>(({
 
   return (
     <>
-      <Chat
-        config={{
-          ...config,
-          supportCitationHitInfo: true,
-        } as any}
-        chatList={chatList}
-        isResponding={isResponding}
-        chatContainerClassName='px-3'
-        chatContainerInnerClassName='pt-6 w-full max-w-full mx-auto'
-        chatFooterClassName='px-4 rounded-bl-2xl'
-        chatFooterInnerClassName='pb-0'
-        showFileUpload
-        showFeatureBar
-        onFeatureBarClick={setShowFeaturesPanel}
-        onSend={doSend}
-        inputs={inputs}
-        inputsForm={(startVariables || []) as any}
-        onRegenerate={doRegenerate}
-        onStopResponding={handleStop}
-        chatNode={(
-          <>
-            {showInputsFieldsPanel && <UserInput />}
-            {
-              !chatList.length && (
-                <Empty />
-              )
-            }
-          </>
-        )}
-        noSpacing
-        suggestedQuestions={suggestedQuestions}
-        showPromptLog
-        chatAnswerContainerInner='!pr-2'
-        switchSibling={setTargetMessageId}
-      />
+      <KnowledgeProvider>
+        <Chat
+          config={{
+            ...config,
+            supportCitationHitInfo: true,
+          } as any}
+          chatList={chatList}
+          isResponding={isResponding}
+          chatContainerClassName='px-3'
+          chatContainerInnerClassName='pt-6 w-full max-w-full mx-auto'
+          chatFooterClassName='px-4 rounded-bl-2xl'
+          chatFooterInnerClassName='pb-0'
+          showFileUpload
+          showFeatureBar
+          onFeatureBarClick={setShowFeaturesPanel}
+          onSend={doSend}
+          inputs={inputs}
+          inputsForm={(startVariables || []) as any}
+          onRegenerate={doRegenerate}
+          onStopResponding={handleStop}
+          chatNode={(
+            <>
+              {showInputsFieldsPanel && <UserInput />}
+              {
+                !chatList.length && (
+                  <Empty />
+                )
+              }
+            </>
+          )}
+          noSpacing
+          suggestedQuestions={suggestedQuestions}
+          showPromptLog
+          chatAnswerContainerInner='!pr-2'
+          switchSibling={setTargetMessageId}
+        />
+      </KnowledgeProvider>
       {showConversationVariableModal && (
         <ConversationVariableModal
           conversationID={conversationId}

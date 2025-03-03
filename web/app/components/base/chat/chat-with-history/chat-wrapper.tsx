@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Chat from '../chat'
 import type {
   ChatConfig,
@@ -11,12 +11,17 @@ import { getLastAnswer, isValidGeneratedAnswer } from '../utils'
 import { useChatWithHistoryContext } from './context'
 import Header from './header'
 import ConfigPanel from './config-panel'
+import SplitViewLayout from './split-view-layout'
+import ArtifactsPanel from '../../artifacts/artifacts-panel'
+import type { ArtifactType } from '../../artifacts/artifact-display'
+import type { Artifact } from '../../artifacts/artifact-display'
 import {
   fetchSuggestedQuestions,
   getUrl,
   stopChatMessageResponding,
 } from '@/service/share'
 import AnswerIcon from '@/app/components/base/answer-icon'
+import { useKnowledge } from '../../knowledge-sidebar/context'
 
 const ChatWrapper = () => {
   const {
@@ -36,6 +41,15 @@ const ChatWrapper = () => {
     appData,
     themeBuilder,
   } = useChatWithHistoryContext()
+
+  const { isOpen: isKnowledgeOpen, items: knowledgeItems, closeSidebar } = useKnowledge()
+
+  // Add effect to close sidebar when conversation changes
+  useEffect(() => {
+    if (isKnowledgeOpen)
+      closeSidebar()
+  }, [currentConversationId, closeSidebar])
+
   const appConfig = useMemo(() => {
     const config = appParams || {}
 
@@ -49,6 +63,7 @@ const ChatWrapper = () => {
       opening_statement: currentConversationId ? currentConversationItem?.introduction : (config as any).opening_statement,
     } as ChatConfig
   }, [appParams, currentConversationItem?.introduction, currentConversationId])
+
   const {
     chatList,
     setTargetMessageId,
@@ -69,7 +84,6 @@ const ChatWrapper = () => {
   useEffect(() => {
     if (currentChatInstanceRef.current)
       currentChatInstanceRef.current.handleStop = handleStop
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const doSend: OnSend = useCallback((message, files, isRegenerate = false, parentAnswer: ChatItem | null = null) => {
@@ -153,32 +167,84 @@ const ChatWrapper = () => {
     />
     : null
 
+  const knowledgeContent = useMemo(() => {
+    if (!knowledgeItems?.length) return null
+
+    return (
+      <div className="p-4">
+        {knowledgeItems.map((item, index) => (
+          <div key={index} className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-700">{item.content}</div>
+            {item.source && (
+              <div className="mt-2 text-xs text-gray-500">
+                Source: {item.source}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }, [knowledgeItems])
+
+  // Add artifacts state
+  const [artifacts, setArtifacts] = useState<Artifact[]>([])
+
+  // Convert knowledge items to artifacts when they change
+  useEffect(() => {
+    if (knowledgeItems?.length) {
+      const knowledgeArtifacts = knowledgeItems.map((item, index) => ({
+        id: `knowledge-${index}`,
+        type: 'markdown' as ArtifactType,
+        title: item.title || item.source || 'Knowledge Item',
+        content: item.content,
+        source: item.source,
+        score: item.score,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        version: 1,
+      }))
+      setArtifacts(knowledgeArtifacts)
+    }
+  }, [knowledgeItems])
+
   return (
-    <div
-      className='h-full bg-chatbot-bg overflow-hidden'
-    >
-      <Chat
-        appData={appData}
-        config={appConfig}
-        chatList={chatList}
-        isResponding={isResponding}
-        chatContainerInnerClassName={`mx-auto pt-6 w-full max-w-[720px] ${isMobile && 'px-4'}`}
-        chatFooterClassName='pb-4'
-        chatFooterInnerClassName={`mx-auto w-full max-w-[720px] ${isMobile && 'px-4'}`}
-        onSend={doSend}
-        inputs={currentConversationId ? currentConversationItem?.inputs as any : newConversationInputs}
-        inputsForm={inputsForms}
-        onRegenerate={doRegenerate}
-        onStopResponding={handleStop}
-        chatNode={chatNode}
-        allToolIcons={appMeta?.tool_icons || {}}
-        onFeedback={handleFeedback}
-        suggestedQuestions={suggestedQuestions}
-        answerIcon={answerIcon}
-        hideProcessDetail
-        themeBuilder={themeBuilder}
-        switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
-      />
+    <div className="h-full bg-chatbot-bg overflow-hidden">
+      <SplitViewLayout
+        isRightContentVisible={isKnowledgeOpen}
+        onClose={closeSidebar}
+        isMobile={isMobile}
+        rightContent={
+          <ArtifactsPanel
+            artifacts={artifacts}
+            isOpen={true}
+            onClose={closeSidebar}
+            isMobile={isMobile}
+          />
+        }
+      >
+        <Chat
+          appData={appData}
+          config={appConfig}
+          chatList={chatList}
+          isResponding={isResponding}
+          chatContainerInnerClassName={`mx-auto pt-6 w-full max-w-[720px] ${isMobile && 'px-4'}`}
+          chatFooterClassName="pb-4"
+          chatFooterInnerClassName={`mx-auto w-full max-w-[720px] ${isMobile && 'px-4'}`}
+          onSend={doSend}
+          inputs={currentConversationId ? currentConversationItem?.inputs as any : newConversationInputs}
+          inputsForm={inputsForms}
+          onRegenerate={doRegenerate}
+          onStopResponding={handleStop}
+          chatNode={chatNode}
+          allToolIcons={appMeta?.tool_icons || {}}
+          onFeedback={handleFeedback}
+          suggestedQuestions={suggestedQuestions}
+          answerIcon={answerIcon}
+          hideProcessDetail
+          themeBuilder={themeBuilder}
+          switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
+        />
+      </SplitViewLayout>
     </div>
   )
 }

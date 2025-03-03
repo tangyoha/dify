@@ -7,6 +7,10 @@ const config = {
     './context/**/*.{js,ts,jsx,tsx}',
   ],
   ...commonConfig,
+  plugins: [
+    ...(commonConfig.plugins || []),
+    require('@tailwindcss/typography'),
+  ],
 }
 
 export default config

@@ -636,6 +636,14 @@ const translation = {
   pagination: {
     perPage: '每页显示',
   },
+  artifact: {
+    panel: {
+      title: '生成内容',
+      listView: '列表视图',
+      gridView: '网格视图',
+      close: '关闭面板',
+    },
+  },
 }
 
 export default translation

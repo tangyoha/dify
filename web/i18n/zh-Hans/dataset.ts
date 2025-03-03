@@ -168,6 +168,18 @@ const translation = {
   preprocessDocument: '{{num}} 个预处理文档',
   allKnowledge: '所有知识库',
   allKnowledgeDescription: '选择以显示该工作区内所有知识库。只有工作区所有者才能管理所有知识库。',
+  items: '项',
+  moreItems: '还有 {{count}} 个项目',
+  relatedKnowledge: '相关知识',
+  type: {
+    code: '代码',
+    markdown: 'Markdown',
+    html: 'HTML',
+    svg: 'SVG',
+    mermaid: 'Mermaid',
+    react: 'React',
+    file: '文件',
+  },
 }
 
 export default translation

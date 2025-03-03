@@ -22,6 +22,7 @@ import Header from '@/app/components/base/chat/embedded-chatbot/header'
 import ConfigPanel from '@/app/components/base/chat/embedded-chatbot/config-panel'
 import ChatWrapper from '@/app/components/base/chat/embedded-chatbot/chat-wrapper'
 import Tooltip from '@/app/components/base/tooltip'
+import { KnowledgeProvider } from '../../knowledge-sidebar/context'
 
 const Chatbot = () => {
   const { t } = useTranslation()
@@ -167,7 +168,9 @@ const EmbeddedChatbotWrapper = () => {
     currentChatInstanceRef,
     themeBuilder,
   }}>
-    <Chatbot />
+    <KnowledgeProvider>
+      <Chatbot />
+    </KnowledgeProvider>
   </EmbeddedChatbotContext.Provider>
 }
 

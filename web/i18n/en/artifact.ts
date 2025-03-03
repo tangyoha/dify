@@ -1,0 +1,26 @@
+export default {
+  panel: {
+    title: 'Artifacts',
+    listView: 'List view',
+    gridView: 'Grid view',
+    close: 'Close artifacts panel',
+  },
+  viewArtifacts: 'View Artifacts',
+  type: {
+    code: 'Code',
+    markdown: 'Markdown',
+    html: 'HTML',
+    svg: 'SVG',
+    mermaid: 'Mermaid',
+    react: 'React',
+    file: 'File',
+  },
+  viewSource: 'View Source',
+  copy: 'Copy',
+  download: 'Download',
+  close: 'Close',
+  source: 'Source',
+  items: 'items',
+  moreItems: '{{count}} more items',
+  relatedKnowledge: 'Related Knowledge',
+} 

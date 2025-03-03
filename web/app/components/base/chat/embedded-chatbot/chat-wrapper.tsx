@@ -19,6 +19,7 @@ import {
 } from '@/service/share'
 import LogoAvatar from '@/app/components/base/logo/logo-embedded-chat-avatar'
 import AnswerIcon from '@/app/components/base/answer-icon'
+import { KnowledgeProvider } from '@/app/components/base/knowledge-sidebar/context'
 
 const ChatWrapper = () => {
   const {
@@ -141,28 +142,30 @@ const ChatWrapper = () => {
       : null
 
   return (
-    <Chat
-      appData={appData}
-      config={appConfig}
-      chatList={chatList}
-      isResponding={isResponding}
-      chatContainerInnerClassName={cn('mx-auto w-full max-w-full tablet:px-4', isMobile && 'px-4')}
-      chatFooterClassName='pb-4'
-      chatFooterInnerClassName={cn('mx-auto w-full max-w-full tablet:px-4', isMobile && 'px-4')}
-      onSend={doSend}
-      inputs={currentConversationId ? currentConversationItem?.inputs as any : newConversationInputs}
-      inputsForm={inputsForms}
-      onRegenerate={doRegenerate}
-      onStopResponding={handleStop}
-      chatNode={chatNode}
-      allToolIcons={appMeta?.tool_icons || {}}
-      onFeedback={handleFeedback}
-      suggestedQuestions={suggestedQuestions}
-      answerIcon={answerIcon}
-      hideProcessDetail
-      themeBuilder={themeBuilder}
-      switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
-    />
+    <KnowledgeProvider>
+      <Chat
+        appData={appData}
+        config={appConfig}
+        chatList={chatList}
+        isResponding={isResponding}
+        chatContainerInnerClassName={cn('mx-auto w-full max-w-full tablet:px-4', isMobile && 'px-4')}
+        chatFooterClassName='pb-4'
+        chatFooterInnerClassName={cn('mx-auto w-full max-w-full tablet:px-4', isMobile && 'px-4')}
+        onSend={doSend}
+        inputs={currentConversationId ? currentConversationItem?.inputs as any : newConversationInputs}
+        inputsForm={inputsForms}
+        onRegenerate={doRegenerate}
+        onStopResponding={handleStop}
+        chatNode={chatNode}
+        allToolIcons={appMeta?.tool_icons || {}}
+        onFeedback={handleFeedback}
+        suggestedQuestions={suggestedQuestions}
+        answerIcon={answerIcon}
+        hideProcessDetail
+        themeBuilder={themeBuilder}
+        switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
+      />
+    </KnowledgeProvider>
   )
 }
 
