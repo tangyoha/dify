@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import KnowledgeBlock from '../knowledge-sidebar/knowledge-block'
 
 const hasEndThink = (children: any): boolean => {
   if (typeof children === 'string')
@@ -67,6 +68,24 @@ export const ThinkBlock = ({ children, ...props }: any) => {
   const { elapsedTime, isComplete } = useThinkTimer(children)
   const displayContent = removeEndThink(children)
   const { t } = useTranslation()
+
+  // Handle knowledge block
+  if (props['data-knowledge']) {
+    try {
+      const content = props.children.find((child: any) =>
+        typeof child === 'string' && child.trim().length > 0,
+      )
+      if (!content) {
+        console.error('No content found in knowledge block')
+        return null
+      }
+      const items = JSON.parse(content)
+      return <KnowledgeBlock items={items} />
+    } catch (error) {
+      console.error('Failed to parse knowledge items:', error)
+      return null
+    }
+  }
 
   if (!(props['data-think'] ?? false))
     return (<details {...props}>{children}</details>)
