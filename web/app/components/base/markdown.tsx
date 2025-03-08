@@ -25,7 +25,7 @@ import SVGRenderer from '@/app/components/base/svg-gallery'
 import MarkdownButton from '@/app/components/base/markdown-blocks/button'
 import MarkdownForm from '@/app/components/base/markdown-blocks/form'
 import ThinkBlock from '@/app/components/base/markdown-blocks/think-block'
-import KnowledgeBlock from './knowledge-sidebar/knowledge-block'
+import KnowledgeBlock from '@/app/components/base/markdown-blocks/knowledge-block'
 import { Theme } from '@/types/app'
 import useTheme from '@/hooks/use-theme'
 import cn from '@/utils/classnames'
@@ -87,12 +87,20 @@ const preprocessKnowledgeTag = (content: string) => {
       /<knowledge>\s*([\s\S]*?)\s*<\/knowledge>/g,
       (_, jsonContent) => {
         try {
+          if (!jsonContent || jsonContent.trim() === '') {
+            console.error('Empty knowledge content')
+            return ''
+          }
           // Remove any leading/trailing whitespace and normalize JSON string
-          const normalizedJson = jsonContent
-            .replace(/^\s+|\s+$/g, '')  // Remove leading/trailing whitespace
-            .replace(/\n\s*/g, '')      // Remove newlines and spaces after them
+          const normalizedJson = jsonContent.trim()
           const items = JSON.parse(normalizedJson)
-          return `<details data-knowledge="true"><summary></summary>${JSON.stringify(items)}</details>`
+          if (!Array.isArray(items)) {
+            console.error('Knowledge content must be an array')
+            return ''
+          }
+          // Use section tag with base64 encoded data to avoid JSON parsing issues
+          const encodedData = Buffer.from(JSON.stringify(items)).toString('base64')
+          return `<section data-knowledge="${encodedData}"></section>`
         }
         catch (error) {
           console.error('Failed to parse knowledge items:', error, jsonContent)
@@ -311,6 +319,7 @@ export function Markdown(props: { content: string; className?: string }) {
           form: MarkdownForm,
           script: ScriptBlock as any,
           details: ThinkBlock,
+          section: KnowledgeBlock,
         }}
       >
         {/* Markdown detect has problem. */}
