@@ -36,6 +36,7 @@ const ChatWrapper = () => {
     appPrevChatTree,
     currentConversationId,
     currentConversationItem,
+    currentConversationInputs,
     inputsForms,
     newConversationInputs,
     newConversationInputsRef,
@@ -86,7 +87,7 @@ const ChatWrapper = () => {
   } = useChat(
     appConfig,
     {
-      inputs: (currentConversationId ? currentConversationItem?.inputs : newConversationInputs) as any,
+      inputs: (currentConversationId ? currentConversationInputs : newConversationInputs) as any,
       inputsForm: inputsForms,
     },
     appPrevChatTree,
@@ -94,7 +95,7 @@ const ChatWrapper = () => {
     clearChatList,
     setClearChatList,
   )
-  const inputsFormValue = currentConversationId ? currentConversationItem?.inputs : newConversationInputsRef?.current
+  const inputsFormValue = currentConversationId ? currentConversationInputs : newConversationInputsRef?.current
   const inputDisabled = useMemo(() => {
     let hasEmptyInput = ''
     let fileIsUploading = false
@@ -140,7 +141,7 @@ const ChatWrapper = () => {
     const data: any = {
       query: message,
       files,
-      inputs: currentConversationId ? currentConversationItem?.inputs : newConversationInputs,
+      inputs: currentConversationId ? currentConversationInputs : newConversationInputs,
       conversation_id: currentConversationId,
       parent_message_id: (isRegenerate ? parentAnswer?.id : getLastAnswer(chatList)?.id) || null,
     }
@@ -160,6 +161,7 @@ const ChatWrapper = () => {
     handleSend,
     currentConversationId,
     currentConversationItem,
+    currentConversationInputs,
     newConversationInputs,
     isInstalledApp,
     appId,
@@ -204,7 +206,7 @@ const ChatWrapper = () => {
       return null
     if (welcomeMessage.suggestedQuestions && welcomeMessage.suggestedQuestions?.length > 0) {
       return (
-        <div className='flex h-[50vh] items-center justify-center px-4 py-12'>
+        <div className='flex min-h-[50vh] items-center justify-center px-4 py-12'>
           <div className='flex max-w-[720px] grow gap-4'>
             <AppIcon
               size='xl'
@@ -213,9 +215,11 @@ const ChatWrapper = () => {
               background={appData?.site.icon_background}
               imageUrl={appData?.site.icon_url}
             />
-            <div className='body-lg-regular grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary'>
-              <Markdown content={welcomeMessage.content} />
-              <SuggestedQuestions item={welcomeMessage} />
+            <div className='w-0 grow'>
+              <div className='body-lg-regular grow rounded-2xl bg-chat-bubble-bg px-4 py-3 text-text-primary'>
+                <Markdown content={welcomeMessage.content} />
+                <SuggestedQuestions item={welcomeMessage} />
+              </div>
             </div>
           </div>
         </div>
