@@ -659,7 +659,8 @@ const translation = {
       listView: '列表视图',
       gridView: '网格视图',
       close: '关闭面板',
-    },
+    }
+  },
   imageInput: {
     dropImageHere: '将图片拖放到此处，或',
     browse: '浏览',
