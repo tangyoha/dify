@@ -25,6 +25,7 @@ import { KnowledgeProvider } from '@/app/components/base/knowledge-sidebar/conte
 import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested-questions'
 import { Markdown } from '@/app/components/base/markdown'
 import cn from '@/utils/classnames'
+import type { FileEntity } from '../../file-uploader/types'
 
 const ChatWrapper = () => {
   const {
@@ -141,10 +142,14 @@ const ChatWrapper = () => {
     )
   }, [currentConversationId, currentConversationInputs, newConversationInputs, chatList, handleSend, isInstalledApp, appId, handleNewConversationCompleted])
 
-  const doRegenerate = useCallback((chatItem: ChatItemInTree) => {
-    const question = chatList.find(item => item.id === chatItem.parentMessageId)!
+  const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
+    const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
     const parentAnswer = chatList.find(item => item.id === question.parentMessageId)
-    doSend(question.content, question.message_files, true, isValidGeneratedAnswer(parentAnswer) ? parentAnswer : null)
+    doSend(editedQuestion ? editedQuestion.message : question.content,
+      editedQuestion ? editedQuestion.files : question.message_files,
+      true,
+      isValidGeneratedAnswer(parentAnswer) ? parentAnswer : null,
+    )
   }, [chatList, doSend])
 
   const messageList = useMemo(() => {
