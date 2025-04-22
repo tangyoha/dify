@@ -42,6 +42,7 @@ import { buildChatItemTree, getThreadMessages } from '@/app/components/base/chat
 import { getProcessedFilesFromResponse } from '@/app/components/base/file-uploader/utils'
 import cn from '@/utils/classnames'
 import { noop } from 'lodash-es'
+import { KnowledgeProvider } from '@/app/components/base/knowledge-sidebar/context'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -749,10 +750,12 @@ const ConversationList: FC<IConversationList> = ({ logs, appDetail, onRefresh })
           onClose: onCloseDrawer,
           appDetail,
         }}>
-          {isChatMode
-            ? <ChatConversationDetailComp appId={appDetail.id} conversationId={currentConversation?.id} />
-            : <CompletionConversationDetailComp appId={appDetail.id} conversationId={currentConversation?.id} />
-          }
+          <KnowledgeProvider>
+            {isChatMode
+              ? <ChatConversationDetailComp appId={appDetail.id} conversationId={currentConversation?.id} />
+              : <CompletionConversationDetailComp appId={appDetail.id} conversationId={currentConversation?.id} />
+            }
+          </KnowledgeProvider>
         </DrawerContext.Provider>
       </Drawer>
     </div>
