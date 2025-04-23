@@ -13,11 +13,18 @@ const withMDX = require('@next/mdx')({
   },
 })
 
+/** @type {import('webpack').Configuration} */
+const webpack = require('webpack');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath,
+  /**
+   * @param {import('webpack').Configuration} config
+   * @param {{ dev: boolean, isServer: boolean }} options
+   */
   webpack: (config, { dev, isServer }) => {
-    config.plugins.push(codeInspectorPlugin({ bundler: 'webpack' }))
+    // config.plugins.push(codeInspectorPlugin({ bundler: 'webpack' })) // Comment out this line
     return config
   },
   productionBrowserSourceMaps: false, // enable browser source map generation during the production build
