@@ -54,6 +54,10 @@ const translation = {
     vectorSpaceTooltip: '高品質インデックスモードのドキュメントは、知識データストレージのリソースを消費します。知識データストレージの上限に達すると、新しいドキュメントはアップロードされません。',
     documentsRequestQuota: '{{count,number}}/分のナレッジ リクエストのレート制限',
     documentsRequestQuotaTooltip: 'ナレッジベース内でワークスペースが1分間に実行できる操作の総数を示します。これには、データセットの作成、削除、更新、ドキュメントのアップロード、修正、アーカイブ、およびナレッジベースクエリが含まれます。この指標は、ナレッジベースリクエストのパフォーマンスを評価するために使用されます。例えば、Sandbox ユーザーが1分間に10回連続でヒットテストを実行した場合、そのワークスペースは次の1分間、データセットの作成、削除、更新、ドキュメントのアップロードや修正などの操作を一時的に実行できなくなります。',
+    apiRateLimit: 'APIレート制限',
+    apiRateLimitUnit: '{{count,number}}/日',
+    unlimitedApiRate: '無制限のAPIコール',
+    apiRateLimitTooltip: 'APIレート制限は、テキスト生成、チャットボット、ワークフロー、ドキュメント処理など、Dify API経由のすべてのリクエストに適用されます。',
     documentProcessingPriority: '文書処理',
     documentProcessingPriorityUpgrade: 'より高い精度と高速な速度でデータを処理します。',
     priority: {
@@ -100,17 +104,17 @@ const translation = {
   },
   plans: {
     sandbox: {
-      name: 'Sandbox（サンドボックス）',
+      name: 'Sandbox',
       for: '主要機能の無料体験',
       description: '主要機能を無料で体験',
     },
     professional: {
-      name: 'Professional（プロフェッショナル）',
+      name: 'Professional',
       for: '個人開発者/小規模チーム向け',
       description: '個人開発者・小規模チームに最適',
     },
     team: {
-      name: 'Team（チーム）',
+      name: 'Team',
       for: '中規模チーム向け',
       description: '成長期のチームに必要な機能を備えたプラン',
     },
@@ -171,12 +175,18 @@ const translation = {
   apps: {
     fullTipLine1: 'より多くのアプリを作成するには、',
     fullTipLine2: 'プランをアップグレードしてください。',
+    fullTip1: 'アプリをもっと作成するためにアップグレードする',
+    contactUs: 'お問い合わせ',
+    fullTip2: 'プランの制限に達しました',
+    fullTip2des: '使用状況を解放するために非アクティブなアプリケーションを整理することをお勧めします。または、お問い合わせください。',
+    fullTip1des: 'このプランでのアプリ構築の制限に達しました',
   },
   annotatedResponse: {
     fullTipLine1: 'より多くの会話を注釈するには、',
     fullTipLine2: 'プランをアップグレードしてください。',
     quotaTitle: '注釈返信クォータ',
   },
+  teamMembers: 'チームメンバー',
 }
 
 export default translation

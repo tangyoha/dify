@@ -67,7 +67,14 @@ class OpsService:
                 new_decrypt_tracing_config.update({"project_url": project_url})
             except Exception:
                 new_decrypt_tracing_config.update({"project_url": "https://www.comet.com/opik/"})
-
+        if tracing_provider == "weave" and (
+            "project_url" not in decrypt_tracing_config or not decrypt_tracing_config.get("project_url")
+        ):
+            try:
+                project_url = OpsTraceManager.get_trace_config_project_url(decrypt_tracing_config, tracing_provider)
+                new_decrypt_tracing_config.update({"project_url": project_url})
+            except Exception:
+                new_decrypt_tracing_config.update({"project_url": "https://wandb.ai/"})
         trace_config_data.tracing_config = new_decrypt_tracing_config
         return trace_config_data.to_dict()
 
@@ -80,7 +87,9 @@ class OpsService:
         :param tracing_config: tracing config
         :return:
         """
-        if tracing_provider not in provider_config_map and tracing_provider:
+        try:
+            provider_config_map[tracing_provider]
+        except KeyError:
             return {"error": f"Invalid tracing provider: {tracing_provider}"}
 
         config_class, other_keys = (
@@ -143,7 +152,9 @@ class OpsService:
         :param tracing_config: tracing config
         :return:
         """
-        if tracing_provider not in provider_config_map:
+        try:
+            provider_config_map[tracing_provider]
+        except KeyError:
             raise ValueError(f"Invalid tracing provider: {tracing_provider}")
 
         # check if trace config already exists

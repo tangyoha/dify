@@ -1,4 +1,4 @@
-const { basePath } = require('./utils/var-basePath')
+const { basePath, assetPrefix } = require('./utils/var-basePath')
 const { codeInspectorPlugin } = require('code-inspector-plugin')
 const withMDX = require('@next/mdx')({
   extension: /\.mdx?$/,
@@ -15,6 +15,11 @@ const withMDX = require('@next/mdx')({
 
 /** @type {import('webpack').Configuration} */
 const webpack = require('webpack');
+// the default url to prevent parse url error when running jest
+const hasSetWebPrefix = process.env.NEXT_PUBLIC_WEB_PREFIX
+const port = process.env.PORT || 3000
+const locImageURLs = !hasSetWebPrefix ? [new URL(`http://localhost:${port}/**`), new URL(`http://127.0.0.1:${port}/**`)] : []
+const remoteImageURLs = [hasSetWebPrefix ? new URL(`${process.env.NEXT_PUBLIC_WEB_PREFIX}/**`) : '', ...locImageURLs].filter(item => !!item)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -23,6 +28,7 @@ const nextConfig = {
    * @param {import('webpack').Configuration} config
    * @param {{ dev: boolean, isServer: boolean }} options
    */
+  assetPrefix,
   webpack: (config, { dev, isServer }) => {
     // config.plugins.push(codeInspectorPlugin({ bundler: 'webpack' })) // Comment out this line
     return config
@@ -30,6 +36,16 @@ const nextConfig = {
   productionBrowserSourceMaps: false, // enable browser source map generation during the production build
   // Configure pageExtensions to include md and mdx
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
+  // https://nextjs.org/docs/messages/next-image-unconfigured-host
+  images: {
+    remotePatterns: remoteImageURLs.map(remoteImageURL => ({
+      protocol: remoteImageURL.protocol.replace(':', ''),
+      hostname: remoteImageURL.hostname,
+      port: remoteImageURL.port,
+      pathname: remoteImageURL.pathname,
+      search: '',
+    })),
+  },
   experimental: {
   },
   // fix all before production. Now it slow the develop speed.

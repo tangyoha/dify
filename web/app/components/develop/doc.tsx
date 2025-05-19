@@ -87,7 +87,7 @@ const Doc = ({ appDetail }: IDocProps) => {
       <div className={`fixed right-8 top-32 z-10 transition-all ${isTocExpanded ? 'w-64' : 'w-10'}`}>
         {isTocExpanded
           ? (
-            <nav className="toc w-full rounded-lg bg-components-panel-bg p-4 shadow-md">
+            <nav className="toc max-h-[calc(100vh-150px)] w-full overflow-y-auto rounded-lg bg-components-panel-bg p-4 shadow-md">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-text-primary">{t('appApi.develop.toc')}</h3>
                 <button
@@ -121,7 +121,7 @@ const Doc = ({ appDetail }: IDocProps) => {
             </button>
           )}
       </div>
-      <article className={cn('prose-xl prose', theme === Theme.dark && 'dark:prose-invert')} >
+      <article className={cn('prose-xl prose', theme === Theme.dark && 'prose-invert')} >
         {(appDetail?.mode === 'chat' || appDetail?.mode === 'agent-chat') && (
           (() => {
             switch (locale) {

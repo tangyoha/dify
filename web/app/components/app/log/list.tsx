@@ -430,6 +430,7 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
                   text_to_speech: {
                     enabled: true,
                   },
+                  questionEditEnable: false,
                   supportAnnotation: true,
                   annotation_reply: {
                     enabled: true,
@@ -485,6 +486,7 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
                     text_to_speech: {
                       enabled: true,
                     },
+                    questionEditEnable: false,
                     supportAnnotation: true,
                     annotation_reply: {
                       enabled: true,

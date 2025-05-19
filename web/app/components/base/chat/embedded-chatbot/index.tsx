@@ -20,12 +20,13 @@ import LogoHeader from '@/app/components/base/logo/logo-embedded-chat-header'
 import Header from '@/app/components/base/chat/embedded-chatbot/header'
 import ChatWrapper from '@/app/components/base/chat/embedded-chatbot/chat-wrapper'
 import { KnowledgeProvider } from '../../knowledge-sidebar/context'
-import LogoSite from '@/app/components/base/logo/logo-site'
+import DifyLogo from '@/app/components/base/logo/dify-logo'
 import cn from '@/utils/classnames'
 
 const Chatbot = () => {
   const {
     isMobile,
+    allowResetChat,
     appInfoError,
     appInfoLoading,
     appData,
@@ -91,6 +92,7 @@ const Chatbot = () => {
       >
         <Header
           isMobile={isMobile}
+          allowResetChat={allowResetChat}
           title={site?.title || ''}
           customerIcon={isDify() ? difyIcon : ''}
           theme={themeBuilder?.theme}
@@ -117,7 +119,7 @@ const Chatbot = () => {
                 <img src={appData?.custom_config?.replace_webapp_logo} alt='logo' className='block h-5 w-auto' />
               )}
               {!appData?.custom_config?.replace_webapp_logo && (
-                <LogoSite className='!h-5' />
+                <DifyLogo size='small' />
               )}
             </div>
           )}
@@ -154,6 +156,7 @@ const EmbeddedChatbotWrapper = () => {
     handleNewConversationCompleted,
     chatShouldReloadKey,
     isInstalledApp,
+    allowResetChat,
     appId,
     handleFeedback,
     currentChatInstanceRef,
@@ -188,6 +191,7 @@ const EmbeddedChatbotWrapper = () => {
     chatShouldReloadKey,
     isMobile,
     isInstalledApp,
+    allowResetChat,
     appId,
     handleFeedback,
     currentChatInstanceRef,
