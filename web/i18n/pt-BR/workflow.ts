@@ -302,6 +302,7 @@ const translation = {
     organizeBlocks: 'Organizar blocos',
     change: 'Mudar',
     optional: '(opcional)',
+    moveToThisNode: 'Mova-se para este nó',
   },
   nodes: {
     common: {
@@ -647,7 +648,6 @@ const translation = {
       'variables': 'Variáveis',
     },
     tool: {
-      toAuthorize: 'Autorizar',
       inputVars: 'Variáveis de entrada',
       outputVars: {
         text: 'conteúdo gerado pela ferramenta',

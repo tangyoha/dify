@@ -22,7 +22,7 @@ from core.ops.entities.trace_entity import (
     WorkflowTraceInfo,
 )
 from core.repositories import SQLAlchemyWorkflowNodeExecutionRepository
-from core.workflow.entities.node_entities import NodeRunMetadataKey
+from core.workflow.entities.workflow_node_execution import WorkflowNodeExecutionMetadataKey
 from core.workflow.nodes.enums import NodeType
 from extensions.ext_database import db
 from models import Account, App, EndUser, MessageFile, WorkflowNodeExecutionTriggeredFrom
@@ -115,6 +115,7 @@ class OpikDataTrace(BaseTraceInstance):
                 "metadata": workflow_metadata,
                 "input": wrap_dict("input", trace_info.workflow_run_inputs),
                 "output": wrap_dict("output", trace_info.workflow_run_outputs),
+                "thread_id": trace_info.conversation_id,
                 "tags": ["message", "workflow"],
                 "project_name": self.project,
             }
@@ -144,6 +145,7 @@ class OpikDataTrace(BaseTraceInstance):
                 "metadata": workflow_metadata,
                 "input": wrap_dict("input", trace_info.workflow_run_inputs),
                 "output": wrap_dict("output", trace_info.workflow_run_outputs),
+                "thread_id": trace_info.conversation_id,
                 "tags": ["workflow"],
                 "project_name": self.project,
             }
@@ -244,7 +246,7 @@ class OpikDataTrace(BaseTraceInstance):
             parent_span_id = trace_info.workflow_app_log_id or trace_info.workflow_run_id
 
             if not total_tokens:
-                total_tokens = execution_metadata.get(NodeRunMetadataKey.TOTAL_TOKENS) or 0
+                total_tokens = execution_metadata.get(WorkflowNodeExecutionMetadataKey.TOTAL_TOKENS) or 0
 
             span_data = {
                 "trace_id": opik_trace_id,
@@ -306,6 +308,7 @@ class OpikDataTrace(BaseTraceInstance):
             "metadata": wrap_metadata(metadata),
             "input": trace_info.inputs,
             "output": message_data.answer,
+            "thread_id": message_data.conversation_id,
             "tags": ["message", str(trace_info.conversation_mode)],
             "project_name": self.project,
         }
@@ -420,6 +423,7 @@ class OpikDataTrace(BaseTraceInstance):
             "metadata": wrap_metadata(trace_info.metadata),
             "input": trace_info.inputs,
             "output": trace_info.outputs,
+            "thread_id": trace_info.conversation_id,
             "tags": ["generate_name"],
             "project_name": self.project,
         }

@@ -53,9 +53,10 @@ from core.variables import (
     StringSegment,
 )
 from core.workflow.constants import SYSTEM_VARIABLE_NODE_ID
-from core.workflow.entities.node_entities import NodeRunMetadataKey, NodeRunResult
+from core.workflow.entities.node_entities import NodeRunResult
 from core.workflow.entities.variable_entities import VariableSelector
 from core.workflow.entities.variable_pool import VariablePool
+from core.workflow.entities.workflow_node_execution import WorkflowNodeExecutionMetadataKey, WorkflowNodeExecutionStatus
 from core.workflow.enums import SystemVariableKey
 from core.workflow.graph_engine.entities.event import InNodeEvent
 from core.workflow.nodes.base import BaseNode
@@ -77,7 +78,6 @@ from core.workflow.utils.variable_template_parser import VariableTemplateParser
 from extensions.ext_database import db
 from models.model import Conversation
 from models.provider import Provider, ProviderType
-from models.workflow import WorkflowNodeExecutionStatus
 
 from .entities import (
     LLMNodeChatModelMessage,
@@ -267,9 +267,9 @@ class LLMNode(BaseNode[LLMNodeData]):
                     process_data=process_data,
                     outputs=outputs,
                     metadata={
-                        NodeRunMetadataKey.TOTAL_TOKENS: usage.total_tokens,
-                        NodeRunMetadataKey.TOTAL_PRICE: usage.total_price,
-                        NodeRunMetadataKey.CURRENCY: usage.currency,
+                        WorkflowNodeExecutionMetadataKey.TOTAL_TOKENS: usage.total_tokens,
+                        WorkflowNodeExecutionMetadataKey.TOTAL_PRICE: usage.total_price,
+                        WorkflowNodeExecutionMetadataKey.CURRENCY: usage.currency,
                     },
                     llm_usage=usage,
                 )

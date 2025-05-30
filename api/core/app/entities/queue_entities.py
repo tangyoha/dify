@@ -6,7 +6,8 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 from core.model_runtime.entities.llm_entities import LLMResult, LLMResultChunk
-from core.workflow.entities.node_entities import AgentNodeStrategyInit, NodeRunMetadataKey
+from core.workflow.entities.node_entities import AgentNodeStrategyInit
+from core.workflow.entities.workflow_node_execution import WorkflowNodeExecutionMetadataKey
 from core.workflow.graph_engine.entities.graph_runtime_state import GraphRuntimeState
 from core.workflow.nodes import NodeType
 from core.workflow.nodes.base import BaseNodeData
@@ -412,7 +413,7 @@ class QueueNodeSucceededEvent(AppQueueEvent):
     inputs: Optional[Mapping[str, Any]] = None
     process_data: Optional[Mapping[str, Any]] = None
     outputs: Optional[Mapping[str, Any]] = None
-    execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+    execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
 
     error: Optional[str] = None
     """single iteration duration map"""
@@ -446,7 +447,7 @@ class QueueNodeRetryEvent(QueueNodeStartedEvent):
     inputs: Optional[Mapping[str, Any]] = None
     process_data: Optional[Mapping[str, Any]] = None
     outputs: Optional[Mapping[str, Any]] = None
-    execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+    execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
 
     error: str
     retry_index: int  # retry index
@@ -480,7 +481,7 @@ class QueueNodeInIterationFailedEvent(AppQueueEvent):
     inputs: Optional[Mapping[str, Any]] = None
     process_data: Optional[Mapping[str, Any]] = None
     outputs: Optional[Mapping[str, Any]] = None
-    execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+    execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
 
     error: str
 
@@ -513,7 +514,7 @@ class QueueNodeInLoopFailedEvent(AppQueueEvent):
     inputs: Optional[Mapping[str, Any]] = None
     process_data: Optional[Mapping[str, Any]] = None
     outputs: Optional[Mapping[str, Any]] = None
-    execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+    execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
 
     error: str
 
@@ -546,7 +547,7 @@ class QueueNodeExceptionEvent(AppQueueEvent):
     inputs: Optional[Mapping[str, Any]] = None
     process_data: Optional[Mapping[str, Any]] = None
     outputs: Optional[Mapping[str, Any]] = None
-    execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+    execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
 
     error: str
 
@@ -579,7 +580,7 @@ class QueueNodeFailedEvent(AppQueueEvent):
     inputs: Optional[Mapping[str, Any]] = None
     process_data: Optional[Mapping[str, Any]] = None
     outputs: Optional[Mapping[str, Any]] = None
-    execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+    execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
 
     error: str
 

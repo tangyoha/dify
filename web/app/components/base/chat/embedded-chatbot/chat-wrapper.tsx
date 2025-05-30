@@ -49,6 +49,7 @@ const ChatWrapper = () => {
     clearChatList,
     setClearChatList,
     setIsResponding,
+    allInputsHidden,
   } = useEmbeddedChatbotContext()
   const appConfig = useMemo(() => {
     const config = appParams || {}
@@ -83,6 +84,9 @@ const ChatWrapper = () => {
   )
   const inputsFormValue = currentConversationId ? currentConversationInputs : newConversationInputsRef?.current
   const inputDisabled = useMemo(() => {
+    if (allInputsHidden)
+      return false
+
     let hasEmptyInput = ''
     let fileIsUploading = false
     const requiredVars = inputsForms.filter(({ required }) => required)
@@ -112,7 +116,7 @@ const ChatWrapper = () => {
     if (fileIsUploading)
       return true
     return false
-  }, [inputsFormValue, inputsForms])
+  }, [inputsFormValue, inputsForms, allInputsHidden])
 
   useEffect(() => {
     if (currentChatInstanceRef.current)
@@ -161,7 +165,7 @@ const ChatWrapper = () => {
   const [collapsed, setCollapsed] = useState(!!currentConversationId)
 
   const chatNode = useMemo(() => {
-    if (!inputsForms.length)
+    if (allInputsHidden || !inputsForms.length)
       return null
     if (isMobile) {
       if (!currentConversationId)
@@ -171,7 +175,7 @@ const ChatWrapper = () => {
     else {
       return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
     }
-  }, [inputsForms.length, isMobile, currentConversationId, collapsed])
+  }, [inputsForms.length, isMobile, currentConversationId, collapsed, allInputsHidden])
 
   const welcome = useMemo(() => {
     const welcomeMessage = chatList.find(item => item.isOpeningStatement)
@@ -181,7 +185,7 @@ const ChatWrapper = () => {
       return null
     if (!welcomeMessage)
       return null
-    if (!collapsed && inputsForms.length > 0)
+    if (!collapsed && inputsForms.length > 0 && !allInputsHidden)
       return null
     if (welcomeMessage.suggestedQuestions && welcomeMessage.suggestedQuestions?.length > 0) {
       return (
@@ -216,7 +220,7 @@ const ChatWrapper = () => {
         </div>
       </div>
     )
-  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, collapsed, currentConversationId, inputsForms.length, respondingState])
+  }, [appData?.site.icon, appData?.site.icon_background, appData?.site.icon_type, appData?.site.icon_url, chatList, collapsed, currentConversationId, inputsForms.length, respondingState, allInputsHidden])
 
   const answerIcon = isDify()
     ? <LogoAvatar className='relative shrink-0' />

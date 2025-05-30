@@ -6,8 +6,8 @@ from pydantic import BaseModel, ConfigDict
 
 from core.model_runtime.entities.llm_entities import LLMResult
 from core.model_runtime.utils.encoders import jsonable_encoder
-from core.workflow.entities.node_entities import AgentNodeStrategyInit, NodeRunMetadataKey
-from models.workflow import WorkflowNodeExecutionStatus
+from core.workflow.entities.node_entities import AgentNodeStrategyInit
+from core.workflow.entities.workflow_node_execution import WorkflowNodeExecutionMetadataKey, WorkflowNodeExecutionStatus
 
 
 class TaskState(BaseModel):
@@ -189,8 +189,7 @@ class WorkflowStartStreamResponse(StreamResponse):
 
         id: str
         workflow_id: str
-        sequence_number: int
-        inputs: dict
+        inputs: Mapping[str, Any]
         created_at: int
 
     event: StreamEvent = StreamEvent.WORKFLOW_STARTED
@@ -210,9 +209,8 @@ class WorkflowFinishStreamResponse(StreamResponse):
 
         id: str
         workflow_id: str
-        sequence_number: int
         status: str
-        outputs: Optional[dict] = None
+        outputs: Optional[Mapping[str, Any]] = None
         error: Optional[str] = None
         elapsed_time: float
         total_tokens: int
@@ -307,7 +305,7 @@ class NodeFinishStreamResponse(StreamResponse):
         status: str
         error: Optional[str] = None
         elapsed_time: float
-        execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+        execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
         created_at: int
         finished_at: int
         files: Optional[Sequence[Mapping[str, Any]]] = []
@@ -376,7 +374,7 @@ class NodeRetryStreamResponse(StreamResponse):
         status: str
         error: Optional[str] = None
         elapsed_time: float
-        execution_metadata: Optional[Mapping[NodeRunMetadataKey, Any]] = None
+        execution_metadata: Optional[Mapping[WorkflowNodeExecutionMetadataKey, Any]] = None
         created_at: int
         finished_at: int
         files: Optional[Sequence[Mapping[str, Any]]] = []
@@ -788,7 +786,7 @@ class WorkflowAppBlockingResponse(AppBlockingResponse):
         id: str
         workflow_id: str
         status: str
-        outputs: Optional[dict] = None
+        outputs: Optional[Mapping[str, Any]] = None
         error: Optional[str] = None
         elapsed_time: float
         total_tokens: int

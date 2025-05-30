@@ -3,7 +3,6 @@ import type { FC } from 'react'
 import classNames from '@/utils/classnames'
 import useTheme from '@/hooks/use-theme'
 import { basePath } from '@/utils/var'
-
 export type LogoStyle = 'default' | 'monochromeWhite'
 
 export const logoPathMap: Record<LogoStyle, string> = {

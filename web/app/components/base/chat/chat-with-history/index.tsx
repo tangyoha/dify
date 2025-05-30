@@ -21,6 +21,7 @@ import { checkOrSetAccessToken } from '@/app/components/share/utils'
 import AppUnavailable from '@/app/components/base/app-unavailable'
 import { KnowledgeProvider } from '../../knowledge-sidebar/context'
 import cn from '@/utils/classnames'
+import useDocumentTitle from '@/hooks/use-document-title'
 
 type ChatWithHistoryProps = {
   className?: string
@@ -29,6 +30,7 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
   className,
 }) => {
   const {
+    userCanAccess,
     appInfoError,
     appData,
     appInfoLoading,
@@ -46,19 +48,17 @@ const ChatWithHistory: FC<ChatWithHistoryProps> = ({
 
   useEffect(() => {
     themeBuilder?.buildTheme(site?.chat_color_theme, site?.chat_color_theme_inverted)
-    if (site) {
-      if (customConfig)
-        document.title = `${site.title}`
-      else
-        document.title = `${site.title} - Powered by Dify`
-    }
   }, [site, customConfig, themeBuilder])
+
+  useDocumentTitle(site?.title || 'Chat')
 
   if (appInfoLoading) {
     return (
       <Loading type='app' />
     )
   }
+  if (!userCanAccess)
+    return <AppUnavailable code={403} unknownReason='no permission.' />
 
   if (appInfoError) {
     return (
@@ -125,6 +125,8 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
   const {
     appInfoError,
     appInfoLoading,
+    accessMode,
+    userCanAccess,
     appData,
     appParams,
     appMeta,
@@ -160,6 +162,7 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
     setIsResponding,
     currentConversationInputs,
     setCurrentConversationInputs,
+    allInputsHidden,
   } = useChatWithHistory(installedAppInfo)
 
   return (
@@ -167,6 +170,8 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
       appInfoError,
       appInfoLoading,
       appData,
+      accessMode,
+      userCanAccess,
       appParams,
       appMeta,
       appChatListDataLoading,
@@ -203,6 +208,7 @@ const ChatWithHistoryWrap: FC<ChatWithHistoryWrapProps> = ({
       setIsResponding,
       currentConversationInputs,
       setCurrentConversationInputs,
+      allInputsHidden,
     }}>
       <KnowledgeProvider>
         <ChatWithHistory className={className} />

@@ -488,7 +488,6 @@ const translation = {
       'variable': 'Spremenljivka',
     },
     tool: {
-      toAuthorize: 'Za avtorizacijo',
       inputVars: 'Vhodne spremenljivke',
       outputVars: {
         text: 'orodje je ustvarilo vsebino',
@@ -739,6 +738,7 @@ const translation = {
     checklistResolved: 'Vse težave so odpravljene',
     addNextStep: 'Dodajanje naslednjega bloka v ta potek dela',
     change: 'Spremeniti',
+    moveToThisNode: 'Premakni se na to vozlišče',
   },
   nodes: {
     common: {

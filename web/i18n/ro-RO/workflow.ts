@@ -302,6 +302,7 @@ const translation = {
     organizeBlocks: 'Organizează blocurile',
     change: 'Schimbă',
     optional: '(opțional)',
+    moveToThisNode: 'Mutați la acest nod',
   },
   nodes: {
     common: {
@@ -647,7 +648,6 @@ const translation = {
       'variables': 'Variabile',
     },
     tool: {
-      toAuthorize: 'Autorizați',
       inputVars: 'Variabile de intrare',
       outputVars: {
         text: 'conținut generat de instrument',

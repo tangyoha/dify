@@ -302,6 +302,7 @@ const translation = {
     organizeBlocks: 'Organiser les blocs',
     change: 'Modifier',
     optional: '(facultatif)',
+    moveToThisNode: 'Déplacer vers ce nœud',
   },
   nodes: {
     common: {
@@ -646,7 +647,6 @@ const translation = {
       'selectAssignedVariable': 'Sélectionner la variable affectée...',
     },
     tool: {
-      toAuthorize: 'Autoriser',
       inputVars: 'Variables de saisie',
       outputVars: {
         text: 'contenu généré par l\'outil',

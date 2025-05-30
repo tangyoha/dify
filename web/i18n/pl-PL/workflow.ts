@@ -302,6 +302,7 @@ const translation = {
     organizeBlocks: 'Organizuj bloki',
     change: 'Zmień',
     optional: '(opcjonalne)',
+    moveToThisNode: 'Przenieś do tego węzła',
   },
   nodes: {
     common: {
@@ -647,7 +648,6 @@ const translation = {
       'noVarTip': 'Kliknij przycisk "+", aby dodać zmienne',
     },
     tool: {
-      toAuthorize: 'Do autoryzacji',
       inputVars: 'Zmienne wejściowe',
       outputVars: {
         text: 'treść generowana przez narzędzie',

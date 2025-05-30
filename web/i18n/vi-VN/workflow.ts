@@ -302,6 +302,7 @@ const translation = {
     organizeBlocks: 'Tổ chức các khối',
     change: 'Thay đổi',
     optional: '(tùy chọn)',
+    moveToThisNode: 'Di chuyển đến nút này',
   },
   nodes: {
     common: {
@@ -647,7 +648,6 @@ const translation = {
       'variables': 'Biến',
     },
     tool: {
-      toAuthorize: 'Ủy quyền',
       inputVars: 'Biến đầu vào',
       outputVars: {
         text: 'nội dung do công cụ tạo ra',
