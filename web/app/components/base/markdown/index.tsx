@@ -7,7 +7,7 @@ import RemarkGfm from 'remark-gfm'
 import RehypeRaw from 'rehype-raw'
 import { flow } from 'lodash-es'
 import cn from '@/utils/classnames'
-import { preprocessLaTeX, preprocessThinkTag, preprocessKnowledgeTag } from './markdown-utils'
+import { customUrlTransform, preprocessLaTeX, preprocessThinkTag, preprocessKnowledgeTag } from './markdown-utils'
 import {
   AudioBlock,
   CodeBlock,
@@ -67,6 +67,7 @@ export function Markdown(props: { content: string; className?: string; customDis
             }
           },
         ]}
+        urlTransform={customUrlTransform}
         disallowedElements={['iframe', 'head', 'html', 'meta', 'link', 'style', 'body', ...(props.customDisallowedElements || [])]}
         components={{
           code: CodeBlock,
