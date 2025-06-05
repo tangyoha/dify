@@ -15,6 +15,7 @@ import type { InputForm } from '../type'
 import { useCheckInputsForms } from '../check-input-forms-hooks'
 import { useTextAreaHeight } from './hooks'
 import Operation from './operation'
+import VariableButton from './variable-button'
 import cn from '@/utils/classnames'
 import { FileListInChatInput } from '@/app/components/base/file-uploader'
 import { useFile } from '@/app/components/base/file-uploader/hooks'
@@ -42,6 +43,9 @@ type ChatInputAreaProps = {
   theme?: Theme | null
   isResponding?: boolean
   disabled?: boolean
+  showVariableButtons?: boolean
+  onVariableChange?: (variable: string, value: any) => void
+  appParams?: any
 }
 const ChatInputArea = ({
   botName,
@@ -57,6 +61,9 @@ const ChatInputArea = ({
   theme,
   isResponding,
   disabled,
+  showVariableButtons = false,
+  onVariableChange,
+  appParams,
 }: ChatInputAreaProps) => {
   const { t } = useTranslation()
   const { notify } = useToastContext()
@@ -213,10 +220,26 @@ const ChatInputArea = ({
                 onDrop={handleDropFile}
               />
             </div>
-            {
-              !isMultipleLine && operation
-            }
+
           </div>
+          {/* Variable buttons and operation buttons row */}
+          <div className='flex items-center justify-between mt-2 px-1 py-1'>
+            <div className='flex items-center gap-3'>
+              {showVariableButtons && inputsForm && inputsForm.length > 0
+                && inputsForm.filter(form => !form.hide && form.show_on_input).map(form => (
+                  <VariableButton
+                    key={form.variable}
+                    variable={form}
+                    value={inputs?.[form.variable]}
+                    onChange={value => onVariableChange?.(form.variable, value)}
+                    appParams={appParams}
+                  />
+                ))
+              }
+            </div>
+            {operation}
+          </div>
+
           {
             showVoiceInput && (
               <VoiceInput
@@ -226,11 +249,6 @@ const ChatInputArea = ({
             )
           }
         </div>
-        {
-          isMultipleLine && (
-            <div className='px-[9px]'>{operation}</div>
-          )
-        }
       </div>
       {showFeatureBar && <FeatureBar showFileUpload={showFileUpload} disabled={featureBarDisabled} onFeatureBarClick={onFeatureBarClick} />}
     </>

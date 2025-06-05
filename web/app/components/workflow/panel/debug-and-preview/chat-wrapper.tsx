@@ -61,6 +61,7 @@ const ChatWrapper = (
     }
   }, [features.opening, features.suggested, features.text2speech, features.speech2text, features.citation, features.moderation, features.file])
   const setShowFeaturesPanel = useStore(s => s.setShowFeaturesPanel)
+  const setInputs = useStore(s => s.setInputs)
 
   const {
     conversationId,
@@ -80,6 +81,13 @@ const ChatWrapper = (
     [],
     taskId => stopChatMessageResponding(appDetail!.id, taskId),
   )
+
+  const handleVariableChange = useCallback((variable: string, value: any) => {
+    setInputs({
+      ...inputs,
+      [variable]: value,
+    })
+  }, [inputs, setInputs])
 
   const doSend: OnSend = useCallback((message, files, isRegenerate = false, parentAnswer: ChatItem | null = null) => {
     handleSend(
@@ -139,6 +147,9 @@ const ChatWrapper = (
           inputsForm={(startVariables || []) as any}
           onRegenerate={doRegenerate}
           onStopResponding={handleStop}
+          showVariableButtons={true}
+          onVariableChange={handleVariableChange}
+          appParams={appDetail}
           chatNode={(
             <>
               {showInputsFieldsPanel && <UserInput />}

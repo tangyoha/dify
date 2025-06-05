@@ -1,12 +1,14 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useCallback, useContext, useState } from 'react'
 
 interface KnowledgeItem {
-  type: 'text' | 'image' | 'link' | 'file' | 'code' | 'faq'
+  type: 'text' | 'image' | 'link' | 'file' | 'code' | 'faq' | 'webpage' | 'markdown'
   content: string
   title?: string
   source?: string
   caption?: string
   score?: number
+  // 内容显示高度配置，适用于所有类型的内容
+  webpageHeight?: string | number
 }
 
 interface KnowledgeContextType {
@@ -31,9 +33,8 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [])
 
   const closeSidebar = useCallback(() => {
-    if (!isPinned) {
+    if (!isPinned)
       setIsOpen(false)
-    }
   }, [isPinned])
 
   const togglePin = useCallback(() => {
@@ -59,10 +60,10 @@ export const KnowledgeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useKnowledge = () => {
   const context = useContext(KnowledgeContext)
-  if (context === undefined) {
+  if (context === undefined)
     throw new Error('useKnowledge must be used within a KnowledgeProvider')
-  }
+
   return context
 }
 
-export default KnowledgeContext 
+export default KnowledgeContext

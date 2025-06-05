@@ -7,11 +7,12 @@ import RemarkGfm from 'remark-gfm'
 import RehypeRaw from 'rehype-raw'
 import { flow } from 'lodash-es'
 import cn from '@/utils/classnames'
-import { preprocessLaTeX, preprocessThinkTag } from './markdown-utils'
+import { preprocessLaTeX, preprocessThinkTag, preprocessKnowledgeTag } from './markdown-utils'
 import {
   AudioBlock,
   CodeBlock,
   Img,
+  KnowledgeBlock,
   Link,
   MarkdownButton,
   MarkdownForm,
@@ -32,6 +33,7 @@ import {
 export function Markdown(props: { content: string; className?: string; customDisallowedElements?: string[] }) {
   const latexContent = flow([
     preprocessThinkTag,
+    preprocessKnowledgeTag,
     preprocessLaTeX,
   ])(props.content)
 
@@ -77,6 +79,7 @@ export function Markdown(props: { content: string; className?: string; customDis
           form: MarkdownForm,
           script: ScriptBlock as any,
           details: ThinkBlock,
+          section: KnowledgeBlock,
         }}
       >
         {/* Markdown detect has problem. */}

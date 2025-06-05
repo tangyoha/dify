@@ -369,6 +369,7 @@ const translation = {
     'content': 'Content',
     'required': 'Required',
     'hide': 'Hide',
+    'showOnInput': 'Show in input box',
     'file': {
       supportFileTypes: 'Support File Types',
       image: {

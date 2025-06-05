@@ -9,8 +9,6 @@ import type {
 import { useChat } from '../chat/hooks'
 import { getLastAnswer, isValidGeneratedAnswer } from '../utils'
 import { useChatWithHistoryContext } from './context'
-import Header from './header'
-import ConfigPanel from './config-panel'
 import SplitViewLayout from './split-view-layout'
 import ArtifactsPanel from '../../artifacts/artifacts-panel'
 import type { ArtifactType } from '../../artifacts/artifact-display'
@@ -41,6 +39,7 @@ const ChatWrapper = () => {
     inputsForms,
     newConversationInputs,
     newConversationInputsRef,
+    handleNewConversationInputsChange,
     handleNewConversationCompleted,
     isMobile,
     isInstalledApp,
@@ -162,6 +161,18 @@ const ChatWrapper = () => {
     )
   }, [chatList, handleNewConversationCompleted, handleSend, currentConversationId, currentConversationInputs, newConversationInputs, isInstalledApp, appId])
 
+  const handleVariableChange = useCallback((variable: string, value: any) => {
+    if (currentConversationId) {
+      // For existing conversations, we would need to update context state
+      // This might need to be implemented at the context level
+      console.log('Variable change in existing conversation:', variable, value)
+    }
+    else {
+      // For new conversations, use the context method to update inputs
+      handleNewConversationInputsChange({ [variable]: value })
+    }
+  }, [currentConversationId, handleNewConversationInputsChange])
+
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
     const parentAnswer = chatList.find(item => item.id === question.parentMessageId)
@@ -249,42 +260,37 @@ const ChatWrapper = () => {
     />
     : null
 
-  const knowledgeContent = useMemo(() => {
-    if (!knowledgeItems?.length) return null
-
-    return (
-      <div className="p-4">
-        {knowledgeItems.map((item, index) => (
-          <div key={index} className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <div className="text-sm text-gray-700">{item.content}</div>
-            {item.source && (
-              <div className="mt-2 text-xs text-gray-500">
-                Source: {item.source}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    )
-  }, [knowledgeItems])
-
   // Add artifacts state
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
 
   // Convert knowledge items to artifacts when they change
   useEffect(() => {
     if (knowledgeItems?.length) {
-      const knowledgeArtifacts = knowledgeItems.map((item, index) => ({
-        id: `knowledge-${index}`,
-        type: 'markdown' as ArtifactType,
-        title: item.title || item.source || 'Knowledge Item',
-        content: item.content,
-        source: item.source,
-        score: item.score,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-      }))
+      const knowledgeArtifacts = knowledgeItems.map((item, index) => {
+        // 直接使用传入的类型，进行简单映射
+        let artifactType: ArtifactType = 'markdown' // 默认类型
+
+        // 直接使用 item.type
+        if (item.type === 'webpage')
+          artifactType = 'webpage'
+        else if (item.type === 'code')
+          artifactType = 'code'
+        else
+          artifactType = 'markdown'
+
+        return {
+          id: `knowledge-${index}`,
+          type: artifactType,
+          title: item.title || item.source || 'Knowledge Item',
+          content: item.content,
+          source: item.source,
+          score: item.score,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          version: 1,
+          webpageHeight: item.webpageHeight,
+        }
+      })
       setArtifacts(knowledgeArtifacts)
     }
   }, [knowledgeItems])
@@ -317,6 +323,9 @@ const ChatWrapper = () => {
           inputsForm={inputsForms}
           onRegenerate={doRegenerate}
           onStopResponding={handleStop}
+          showVariableButtons={true}
+          onVariableChange={handleVariableChange}
+          appParams={appData}
           chatNode={
             <>
               {chatNode}

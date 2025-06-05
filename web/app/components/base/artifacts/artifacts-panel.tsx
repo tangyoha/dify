@@ -5,7 +5,7 @@ import cn from '@/utils/classnames'
 import ArtifactDisplay from './artifact-display'
 import type { Artifact } from './artifact-display'
 
-interface ArtifactsPanelProps {
+type ArtifactsPanelProps = {
   artifacts: Artifact[]
   isOpen: boolean
   onClose: () => void
@@ -46,10 +46,10 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
   if (!selectedArtifact) return null
 
   return (
-    <div className="flex-1 overflow-hidden flex flex-col">
+    <div className="flex flex-1 flex-col overflow-hidden">
       {/* Header */}
       <div className={cn(
-        'flex items-center justify-between border-b border-gray-200',
+        'flex items-center justify-between border-b border-components-panel-border',
         isMobile ? 'p-1' : 'p-2',
       )}>
         <div className="flex items-center space-x-2">
@@ -58,25 +58,39 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  'p-1 rounded transition-colors',
-                  viewMode === 'list' ? 'bg-gray-200' : 'hover:bg-gray-100',
+                  'rounded p-1 text-text-secondary transition-colors',
+                  viewMode === 'list'
+                    ? 'bg-state-accent-active text-text-accent'
+                    : 'hover:bg-state-base-hover hover:text-text-primary',
                 )}
                 title={t('artifact.panel.listView')}
               >
-                <RiListUnordered className="w-4 h-4" />
+                <RiListUnordered className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
                 className={cn(
-                  'p-1 rounded transition-colors',
-                  viewMode === 'grid' ? 'bg-gray-200' : 'hover:bg-gray-100',
+                  'rounded p-1 text-text-secondary transition-colors',
+                  viewMode === 'grid'
+                    ? 'bg-state-accent-active text-text-accent'
+                    : 'hover:bg-state-base-hover hover:text-text-primary',
                 )}
                 title={t('artifact.panel.gridView')}
               >
-                <RiGridFill className="w-4 h-4" />
+                <RiGridFill className="h-4 w-4" />
               </button>
             </>
           )}
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={onClose}
+            className="rounded-full p-1 text-text-secondary transition-colors hover:bg-state-base-hover hover:text-text-primary"
+            aria-label={t('artifact.panel.close')}
+            title={t('artifact.panel.close')}
+          >
+            <RiCloseLine className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
@@ -87,7 +101,7 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
           className={cn(
             'overflow-y-auto transition-all duration-200',
             {
-              'border-r border-gray-200': !isMobile && viewMode === 'list',
+              'border-r border-components-panel-border': !isMobile && viewMode === 'list',
               'w-12': !isMobile && viewMode === 'list' && isListCollapsed,
               'w-60': !isMobile && viewMode === 'list' && !isListCollapsed,
               'w-full px-4 py-2': viewMode === 'grid' || isMobile,
@@ -99,12 +113,13 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
           {!isMobile && viewMode === 'list' && (
             <button
               onClick={() => setIsListCollapsed(!isListCollapsed)}
-              className="w-full p-1 hover:bg-gray-100 flex justify-center border-b border-gray-200"
+              className="flex w-full justify-center border-b border-components-panel-border p-1 text-text-secondary transition-colors hover:bg-state-base-hover hover:text-text-primary"
+              title={isListCollapsed ? t('artifact.panel.expand') : t('artifact.panel.collapse')}
             >
               {isListCollapsed ? (
-                <RiArrowRightSLine className="w-4 h-4" />
+                <RiArrowRightSLine className="h-4 w-4" />
               ) : (
-                <RiArrowLeftSLine className="w-4 h-4" />
+                <RiArrowLeftSLine className="h-4 w-4" />
               )}
             </button>
           )}
@@ -122,23 +137,23 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                 onClick={() => handleArtifactClick(artifact.id)}
                 className={cn(
                   viewMode === 'list'
-                    ? 'p-2 mb-1'
+                    ? 'mb-1 p-2'
                     : cn(
-                      'flex flex-col items-center text-center h-full',
+                      'flex h-full flex-col items-center text-center',
                       isMobile ? 'p-2' : 'p-4',
                     ),
-                  selectedArtifactId === artifact.id ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50',
-                  'border rounded-md cursor-pointer transition-colors',
+                  selectedArtifactId === artifact.id ? 'border-text-accent bg-state-accent-active' : 'hover:bg-state-base-hover',
+                  'cursor-pointer rounded-md border border-components-panel-border transition-colors',
                 )}
               >
                 {/* Show full content in grid view or when list is not collapsed */}
                 {(viewMode === 'grid' || !isListCollapsed) && (
                   <div className={cn(
-                    'flex flex-col gap-1 w-full',
+                    'flex w-full flex-col gap-1',
                     viewMode === 'grid' ? 'items-center' : '',
                   )}>
                     <div className={cn(
-                      'font-medium text-gray-800 truncate max-w-full',
+                      'max-w-full truncate font-medium text-text-primary',
                       isMobile && viewMode === 'grid' ? 'text-xs' : 'text-sm',
                     )}>
                       {artifact.title}
@@ -146,7 +161,7 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                     {artifact.score !== undefined && (
                       <div className="inline-flex">
                         <span className={cn(
-                          'px-2 py-0.5 font-medium bg-blue-100 text-blue-800 rounded',
+                          'rounded bg-state-accent-active px-2 py-0.5 font-medium text-text-accent',
                           isMobile ? 'text-[10px]' : 'text-xs',
                         )}>
                           {(artifact.score * 100).toFixed(0)}%
@@ -157,7 +172,7 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
                 )}
                 {/* Only show mini view in list mode when collapsed */}
                 {viewMode === 'list' && isListCollapsed && (
-                  <div className="w-6 h-6 flex items-center justify-center text-xs font-medium bg-gray-100 rounded" title={artifact.title}>
+                  <div className="flex h-6 w-6 items-center justify-center rounded bg-components-panel-bg-blur text-xs font-medium text-text-secondary" title={artifact.title}>
                     {artifact.title.charAt(0)}
                   </div>
                 )}
@@ -171,18 +186,18 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
           <div className={cn(
             'flex-1 overflow-y-auto',
             {
-              'fixed inset-0 z-50 bg-white': isMobile && viewMode === 'list',
+              'fixed inset-0 z-50 bg-components-panel-bg': isMobile && viewMode === 'list',
             },
           )}>
             {isMobile && viewMode === 'list' && (
-              <div className="sticky top-0 z-10 flex items-center justify-between p-2 bg-white border-b border-gray-200">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-components-panel-border bg-components-panel-bg p-2">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className="p-1.5 hover:bg-gray-100 rounded-full"
+                  className="rounded-full p-1.5 text-text-secondary transition-colors hover:bg-state-base-hover hover:text-text-primary"
                 >
-                  <RiArrowLeftSLine className="w-5 h-5" />
+                  <RiArrowLeftSLine className="h-5 w-5" />
                 </button>
-                <h2 className="font-medium text-sm truncate max-w-[200px]">{selectedArtifact.title}</h2>
+                <h2 className="max-w-[200px] truncate text-sm font-medium text-text-primary">{selectedArtifact.title}</h2>
                 <div className="w-8" /> {/* Spacer for alignment */}
               </div>
             )}
@@ -194,4 +209,4 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({
   )
 }
 
-export default ArtifactsPanel 
+export default ArtifactsPanel

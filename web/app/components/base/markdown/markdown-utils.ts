@@ -36,3 +36,33 @@ export const preprocessThinkTag = (content: string) => {
     (str: string) => str.replace(/(<\/details>)(?![^\S\r\n]*[\r\n])(?![^\S\r\n]*$)/g, '$1\n'),
   ])(content)
 }
+
+export const preprocessKnowledgeTag = (content: string) => {
+  return flow([
+    (str: string) => str.replace(
+      /<knowledge>\s*([\s\S]*?)\s*<\/knowledge>/g,
+      (_, jsonContent) => {
+        try {
+          if (!jsonContent || jsonContent.trim() === '') {
+            console.error('Empty knowledge content')
+            return ''
+          }
+          // Remove any leading/trailing whitespace and normalize JSON string
+          const normalizedJson = jsonContent.trim()
+          const items = JSON.parse(normalizedJson)
+          if (!Array.isArray(items)) {
+            console.error('Knowledge content must be an array')
+            return ''
+          }
+          // Use section tag with base64 encoded data to avoid JSON parsing issues
+          const encodedData = Buffer.from(JSON.stringify(items)).toString('base64')
+          return `<section data-knowledge="${encodedData}"></section>`
+        }
+        catch (error) {
+          console.error('Failed to parse knowledge items:', error, jsonContent)
+          return ''
+        }
+      },
+    ),
+  ])(content)
+}

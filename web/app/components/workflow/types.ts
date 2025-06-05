@@ -198,6 +198,7 @@ export type InputVar = {
   hint?: string
   options?: string[]
   value_selector?: ValueSelector
+  show_on_input?: boolean
   hide: boolean
 } & Partial<UploadFileSetting>
 

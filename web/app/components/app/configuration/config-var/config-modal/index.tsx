@@ -242,6 +242,11 @@ const ConfigModal: FC<IConfigModalProps> = ({
             <Checkbox checked={tempPayload.hide} disabled={tempPayload.required} onCheck={() => handlePayloadChange('hide')(!tempPayload.hide)} />
             <span className='system-sm-semibold text-text-secondary'>{t('appDebug.variableConfig.hide')}</span>
           </div>
+
+          <div className='!mt-5 flex h-6 items-center space-x-2'>
+            <Checkbox checked={tempPayload.show_on_input || false} onCheck={() => handlePayloadChange('show_on_input')(!tempPayload.show_on_input)} />
+            <span className='system-sm-semibold text-text-secondary'>{t('appDebug.variableConfig.showOnInput')}</span>
+          </div>
         </div>
       </div>
       <ModalFoot

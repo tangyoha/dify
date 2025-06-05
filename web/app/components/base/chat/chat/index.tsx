@@ -73,6 +73,9 @@ export type ChatProps = {
   inputDisabled?: boolean
   isMobile?: boolean
   sidebarCollapseState?: boolean
+  showVariableButtons?: boolean
+  onVariableChange?: (variable: string, value: any) => void
+  appParams?: any
 }
 
 const Chat: FC<ChatProps> = ({
@@ -112,6 +115,9 @@ const Chat: FC<ChatProps> = ({
   inputDisabled,
   isMobile,
   sidebarCollapseState,
+  showVariableButtons,
+  onVariableChange,
+  appParams,
 }) => {
   const { t } = useTranslation()
   const { currentLogItem, setCurrentLogItem, showPromptLogModal, setShowPromptLogModal, showAgentLogModal, setShowAgentLogModal } = useAppStore(useShallow(state => ({
@@ -316,6 +322,9 @@ const Chat: FC<ChatProps> = ({
                   inputsForm={inputsForm}
                   theme={themeBuilder?.theme}
                   isResponding={isResponding}
+                  showVariableButtons={showVariableButtons}
+                  onVariableChange={onVariableChange}
+                  appParams={appParams}
                 />
               )
             }
