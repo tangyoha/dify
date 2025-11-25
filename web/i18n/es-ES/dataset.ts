@@ -19,7 +19,6 @@ const translation = {
   intro5: 'se puede crear',
   intro6: ' como un complemento independiente de ChatGPT para publicar',
   unavailable: 'No disponible',
-  unavailableTip: 'El modelo de incrustación no está disponible, es necesario configurar el modelo de incrustación predeterminado',
   datasets: 'CONOCIMIENTO',
   datasetsApi: 'ACCESO A LA API',
   retrieval: {
@@ -42,6 +41,10 @@ const translation = {
     },
     change: 'Cambiar',
     changeRetrievalMethod: 'Cambiar método de recuperación',
+    keyword_search: {
+      title: 'Índice invertido',
+      description: 'El índice invertido es una estructura utilizada para una recuperación eficiente. Organizado por términos, cada término apunta a documentos o páginas web que lo contienen.',
+    },
   },
   docsFailedNotice: 'no se pudieron indexar los documentos',
   retry: 'Reintentar',
@@ -149,6 +152,8 @@ const translation = {
   chunkingMode: {
     parentChild: 'Padre-hijo',
     general: 'General',
+    graph: 'gráfico',
+    qa: 'Preguntas y respuestas',
   },
   parentMode: {
     fullDoc: 'Documento completo',
@@ -179,6 +184,7 @@ const translation = {
     checkName: {
       empty: 'El nombre de metadatos no puede estar vacío',
       invalid: 'El nombre de los metadatos solo puede contener letras minúsculas, números y guiones bajos, y debe comenzar con una letra minúscula.',
+      tooLong: 'El nombre de los metadatos no puede exceder {{max}} caracteres.',
     },
     batchEditMetadata: {
       multipleValue: 'Valor Múltiple',
@@ -202,6 +208,8 @@ const translation = {
       builtInDescription: 'Los metadatos integrados se extraen y generan automáticamente. Deben estar habilitados antes de su uso y no se pueden editar.',
       name: 'Nombre',
       description: 'Puedes gestionar todos los metadatos en este conocimiento aquí. Las modificaciones se sincronizarán en todos los documentos.',
+      disabled: 'desactivar',
+      builtIn: 'Integrado',
     },
     documentMetadata: {
       technicalParameters: 'Parámetros técnicos',
@@ -214,6 +222,20 @@ const translation = {
     addMetadata: 'Agregar Metadatos',
   },
   embeddingModelNotAvailable: 'El modelo de embeddings no está disponible.',
+  externalKnowledgeBase: 'Base de conocimientos externa',
+  createFromPipeline: 'Crear desde Knowledge Pipeline',
+  updated: 'Actualizado',
+  serviceApi: {
+    card: {
+      apiReference: 'Referencia de la API',
+      apiKey: 'Clave API',
+      endpoint: 'Punto de enlace de la API de servicio',
+      title: 'API del servicio de backend',
+    },
+    enabled: 'En servicio',
+    title: 'API de servicios',
+    disabled: 'Discapacitado',
+  },
 }
 
 export default translation

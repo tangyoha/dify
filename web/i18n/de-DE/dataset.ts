@@ -19,7 +19,6 @@ const translation = {
   intro5: 'kann erstellt werden',
   intro6: ' als ein eigenständiges ChatGPT-Index-Plugin zum Veröffentlichen',
   unavailable: 'Nicht verfügbar',
-  unavailableTip: 'Einbettungsmodell ist nicht verfügbar, das Standard-Einbettungsmodell muss konfiguriert werden',
   datasets: 'WISSEN',
   datasetsApi: 'API',
   retrieval: {
@@ -42,6 +41,10 @@ const translation = {
     },
     change: 'Ändern',
     changeRetrievalMethod: 'Abfragemethode ändern',
+    keyword_search: {
+      title: 'Invertierter Index',
+      description: 'Der invertierte Index ist eine Struktur, die für einen effizienten Abruf verwendet wird. Jeder Begriff ist nach Begriffen geordnet und verweist auf Dokumente oder Webseiten, die ihn enthalten.',
+    },
   },
   docsFailedNotice: 'Dokumente konnten nicht indiziert werden',
   retry: 'Wiederholen',
@@ -149,6 +152,8 @@ const translation = {
   chunkingMode: {
     parentChild: 'Eltern-Kind',
     general: 'Allgemein',
+    graph: 'Graph',
+    qa: 'Fragen und Antworten',
   },
   parentMode: {
     paragraph: 'Absatz',
@@ -179,6 +184,7 @@ const translation = {
     checkName: {
       empty: 'Der Metadatenname darf nicht leer sein.',
       invalid: 'Der Metadatenname darf nur Kleinbuchstaben, Zahlen und Unterstriche enthalten und muss mit einem Kleinbuchstaben beginnen.',
+      tooLong: 'Der Metadatenname darf {{max}} Zeichen nicht überschreiten.',
     },
     batchEditMetadata: {
       editMetadata: 'Metadaten bearbeiten',
@@ -216,6 +222,20 @@ const translation = {
     addMetadata: 'Metadaten hinzufügen',
   },
   embeddingModelNotAvailable: 'Das Einbettungsmodell ist nicht verfügbar.',
+  updated: 'Aktualisierte',
+  externalKnowledgeBase: 'Externe Wissensdatenbank',
+  createFromPipeline: 'Aus Wissenspipeline erstellen',
+  serviceApi: {
+    card: {
+      title: 'Backend-Dienst-API',
+      apiReference: 'API Referenz',
+      apiKey: 'API-Schlüssel',
+      endpoint: 'Service-API-Endpunkt',
+    },
+    title: 'Service-API',
+    enabled: 'Im Dienst',
+    disabled: 'Behindert',
+  },
 }
 
 export default translation

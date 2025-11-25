@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useBoolean } from 'ahooks'
 import copy from 'copy-to-clipboard'
 import { RiClipboardLine, RiDeleteBinLine, RiEditLine, RiLoginCircleLine } from '@remixicon/react'
-import type { EndpointListItem } from '../types'
+import type { EndpointListItem, PluginDetail } from '../types'
 import EndpointModal from './endpoint-modal'
 import { NAME_FIELD } from './utils'
 import { addDefaultValue, toolCredentialToFormSchemas } from '@/app/components/tools/utils/to-form-schema'
-import { ClipboardCheck } from '@/app/components/base/icons/src/vender/line/files'
+import { CopyCheck } from '@/app/components/base/icons/src/vender/line/files'
 import ActionButton from '@/app/components/base/action-button'
 import Confirm from '@/app/components/base/confirm'
 import Indicator from '@/app/components/header/indicator'
@@ -22,11 +22,13 @@ import {
 } from '@/service/use-endpoints'
 
 type Props = {
+  pluginDetail: PluginDetail
   data: EndpointListItem
   handleChange: () => void
 }
 
 const EndpointCard = ({
+  pluginDetail,
   data,
   handleChange,
 }: Props) => {
@@ -130,7 +132,7 @@ const EndpointCard = ({
     }
   }, [isCopied])
 
-  const CopyIcon = isCopied ? ClipboardCheck : RiClipboardLine
+  const CopyIcon = isCopied ? CopyCheck : RiClipboardLine
 
   return (
     <div className='rounded-xl bg-background-section-burn p-0.5'>
@@ -206,10 +208,11 @@ const EndpointCard = ({
       )}
       {isShowEndpointModal && (
         <EndpointModal
-          formSchemas={formSchemas}
+          formSchemas={formSchemas as any}
           defaultValues={formValue}
           onCancel={hideEndpointModalConfirm}
           onSaved={handleUpdate}
+          pluginDetail={pluginDetail}
         />
       )}
     </div>

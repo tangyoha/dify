@@ -19,7 +19,6 @@ const translation = {
   intro5: 'peut être créé',
   intro6: 'comme un plug-in d\'index ChatGPT autonome à publier',
   unavailable: 'Indisponible',
-  unavailableTip: 'Le modèle d\'embedding n\'est pas disponible, le modèle d\'embedding par défaut doit être configuré',
   datasets: 'CONNAISSANCE',
   datasetsApi: 'API',
   retrieval: {
@@ -42,6 +41,10 @@ const translation = {
     },
     change: 'Changer',
     changeRetrievalMethod: 'Changer la méthode de récupération',
+    keyword_search: {
+      title: 'Index inversé',
+      description: 'L’indice inversé est une structure utilisée pour une récupération efficace. Organisé par termes, chaque terme pointe vers des documents ou des pages web qui le contiennent.',
+    },
   },
   docsFailedNotice: 'Les documents n\'ont pas pu être indexés',
   retry: 'Réessayer',
@@ -149,6 +152,8 @@ const translation = {
   chunkingMode: {
     general: 'Généralités',
     parentChild: 'Parent-enfant',
+    graph: 'Graphique',
+    qa: 'Q&R',
   },
   parentMode: {
     paragraph: 'Paragraphe',
@@ -179,6 +184,7 @@ const translation = {
     checkName: {
       empty: 'Le nom des métadonnées ne peut pas être vide',
       invalid: 'Le nom des métadonnées ne peut contenir que des lettres minuscules, des chiffres et des tirets bas et doit commencer par une lettre minuscule.',
+      tooLong: 'Le nom des métadonnées ne peut pas dépasser {{max}} caractères',
     },
     batchEditMetadata: {
       editMetadata: 'Modifier les métadonnées',
@@ -216,6 +222,20 @@ const translation = {
     chooseTime: 'Choisissez un moment...',
   },
   embeddingModelNotAvailable: 'Le modèle d\'embedding n\'est pas disponible.',
+  updated: 'Actualisé',
+  createFromPipeline: 'Créer à partir du pipeline de connaissances',
+  externalKnowledgeBase: 'Base de connaissances externe',
+  serviceApi: {
+    card: {
+      apiKey: 'Clé API',
+      apiReference: 'Référence API',
+      title: 'API du service backend',
+      endpoint: 'Point de terminaison de l\'API',
+    },
+    enabled: 'En service',
+    title: 'API de service',
+    disabled: 'désactivé',
+  },
 }
 
 export default translation

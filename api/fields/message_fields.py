@@ -1,4 +1,4 @@
-from flask_restful import fields
+from flask_restx import Api, Namespace, fields
 
 from fields.conversation_fields import message_file_fields
 from libs.helper import TimestampField
@@ -9,6 +9,13 @@ feedback_fields = {
     "rating": fields.String,
     "content": fields.String,
 }
+}
+
+
+def build_feedback_model(api_or_ns: Api | Namespace):
+    """Build the feedback model for the API or Namespace."""
+    return api_or_ns.model("Feedback", feedback_fields)
+
 
 agent_thought_fields = {
     "id": fields.String,
@@ -23,6 +30,12 @@ agent_thought_fields = {
     "observation": fields.String,
     "files": fields.List(fields.String),
 }
+
+
+def build_agent_thought_model(api_or_ns: Api | Namespace):
+    """Build the agent thought model for the API or Namespace."""
+    return api_or_ns.model("AgentThought", agent_thought_fields)
+
 
 retriever_resource_fields = {
     "id": fields.String,

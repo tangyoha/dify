@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import cn from '@/utils/classnames'
 import Indicator from '@/app/components/header/indicator'
 import StatusContainer from '@/app/components/workflow/run/status-container'
+import { useDocLink } from '@/context/i18n'
 
 type ResultProps = {
   status: string
@@ -11,6 +12,7 @@ type ResultProps = {
   tokens?: number
   error?: string
   exceptionCounts?: number
+  isListening?: boolean
 }
 
 const StatusPanel: FC<ResultProps> = ({
@@ -19,8 +21,10 @@ const StatusPanel: FC<ResultProps> = ({
   tokens,
   error,
   exceptionCounts,
+  isListening = false,
 }) => {
   const { t } = useTranslation()
+  const docLink = useDocLink()
 
   return (
     <StatusContainer status={status}>
@@ -43,7 +47,7 @@ const StatusPanel: FC<ResultProps> = ({
             {status === 'running' && (
               <>
                 <Indicator color={'blue'} />
-                <span>Running</span>
+                <span>{isListening ? 'Listening' : 'Running'}</span>
               </>
             )}
             {status === 'succeeded' && (
@@ -104,7 +108,7 @@ const StatusPanel: FC<ResultProps> = ({
       {status === 'failed' && error && (
         <>
           <div className='my-2 h-[0.5px] bg-divider-subtle'/>
-          <div className='system-xs-regular text-text-destructive'>{error}</div>
+          <div className='system-xs-regular whitespace-pre-wrap text-text-destructive'>{error}</div>
           {
             !!exceptionCounts && (
               <>
@@ -134,7 +138,7 @@ const StatusPanel: FC<ResultProps> = ({
             <div className='system-xs-medium text-text-warning'>
               {error}
               <a
-                href='https://docs.dify.ai/guides/workflow/error-handling/error-type'
+                href={docLink('/guides/workflow/error-handling/error-type')}
                 target='_blank'
                 className='text-text-accent'
               >

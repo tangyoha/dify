@@ -3,7 +3,6 @@ import Chat from '../chat'
 import type {
   ChatConfig,
   ChatItem,
-  ChatItemInTree,
   OnSend,
 } from '../types'
 import { useChat } from '../chat/hooks'
@@ -26,6 +25,7 @@ import SuggestedQuestions from '@/app/components/base/chat/chat/answer/suggested
 import { Markdown } from '@/app/components/base/markdown'
 import cn from '@/utils/classnames'
 import type { FileEntity } from '../../file-uploader/types'
+import Avatar from '../../avatar'
 
 const ChatWrapper = () => {
   const {
@@ -52,6 +52,7 @@ const ChatWrapper = () => {
     allInputsHidden,
     setCurrentConversationInputs,
     handleNewConversationInputsChange,
+    initUserVariables,
   } = useEmbeddedChatbotContext()
   const appConfig = useMemo(() => {
     const config = appParams || {}
@@ -63,9 +64,9 @@ const ChatWrapper = () => {
         fileUploadConfig: (config as any).system_parameters,
       },
       supportFeedback: true,
-      opening_statement: currentConversationId ? currentConversationItem?.introduction : (config as any).opening_statement,
+      opening_statement: currentConversationItem?.introduction || (config as any).opening_statement,
     } as ChatConfig
-  }, [appParams, currentConversationItem?.introduction, currentConversationId])
+  }, [appParams, currentConversationItem?.introduction])
   const {
     chatList,
     setTargetMessageId,
@@ -91,7 +92,7 @@ const ChatWrapper = () => {
 
     let hasEmptyInput = ''
     let fileIsUploading = false
-    const requiredVars = inputsForms.filter(({ required }) => required)
+    const requiredVars = inputsForms.filter(({ required, type }) => required && type !== InputVarType.checkbox) // boolean can be not checked
     if (requiredVars.length) {
       requiredVars.forEach(({ variable, label, type }) => {
         if (hasEmptyInput)
@@ -181,7 +182,7 @@ const ChatWrapper = () => {
     }
   }, [currentConversationId, currentConversationInputs, setCurrentConversationInputs, handleNewConversationInputsChange, newConversationInputsRef])
 
-  const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
+  const doRegenerate = useCallback((chatItem: ChatItem, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
     const parentAnswer = chatList.find(item => item.id === question.parentMessageId)
     doSend(editedQuestion ? editedQuestion.message : question.content,
@@ -192,8 +193,9 @@ const ChatWrapper = () => {
   }, [chatList, doSend])
 
   const messageList = useMemo(() => {
-    if (currentConversationId)
+    if (currentConversationId || chatList.length > 1)
       return chatList
+    // Without messages we are in the welcome screen, so hide the opening statement from chatlist
     return chatList.filter(item => !item.isOpeningStatement)
   }, [chatList, currentConversationId])
 
@@ -270,11 +272,11 @@ const ChatWrapper = () => {
   return (
     <KnowledgeProvider>
     <Chat
-      appData={appData}
+      appData={appData || undefined}
       config={appConfig}
       chatList={messageList}
       isResponding={respondingState}
-      chatContainerInnerClassName={cn('mx-auto w-full max-w-full pt-4 tablet:px-4', isMobile && 'px-4')}
+      chatContainerInnerClassName={cn('mx-auto w-full max-w-full px-4', messageList.length && 'pt-4')}
       chatFooterClassName={cn('pb-4', !isMobile && 'rounded-b-2xl')}
       chatFooterInnerClassName={cn('mx-auto w-full max-w-full px-4', isMobile && 'px-2')}
       onSend={doSend}
@@ -296,12 +298,19 @@ const ChatWrapper = () => {
       suggestedQuestions={suggestedQuestions}
       answerIcon={answerIcon}
       hideProcessDetail
-        themeBuilder={themeBuilder}
-        switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
-        inputDisabled={inputDisabled}
-        isMobile={isMobile}
-      />
-    </KnowledgeProvider>
+      themeBuilder={themeBuilder}
+      switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
+      inputDisabled={inputDisabled}
+      isMobile={isMobile}
+      questionIcon={
+        initUserVariables?.avatar_url
+          ? <Avatar
+            avatar={initUserVariables.avatar_url}
+            name={initUserVariables.name || 'user'}
+            size={40}
+          /> : undefined
+      }
+    />
   )
 }
 

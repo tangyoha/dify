@@ -29,6 +29,8 @@ const translation = {
       delete: 'ลบ',
       enableWarning: 'ไม่สามารถเปิดใช้งานไฟล์ที่เก็บถาวรได้',
       sync: 'ซิงค์',
+      pause: 'หยุด',
+      resume: 'ดำเนิน',
     },
     index: {
       enable: 'เปิด',
@@ -79,6 +81,7 @@ const translation = {
       ok: 'ตกลง, ได้',
     },
     learnMore: 'ศึกษาเพิ่มเติม',
+    sort: {},
   },
   metadata: {
     title: 'ข้อมูลเมตา',
@@ -96,6 +99,9 @@ const translation = {
       upload_file: 'อัปโหลดไฟล์',
       notion: 'ซิงค์แบบฟอร์ม Notion',
       github: 'แบบฟอร์มซิงค์ Github',
+      online_document: 'เอกสารออนไลน์',
+      local_file: 'ไฟล์ท้องถิ่น',
+      website_crawl: 'รวบรวมข้อมูลเว็บไซต์',
     },
     type: {
       book: 'หนังสือ',
@@ -333,13 +339,13 @@ const translation = {
     parentMaxTokens: 'พ่อแม่',
     pause: 'หยุด',
     hierarchical: 'พ่อแม่ลูก',
+    waiting: 'กำลังรอสัญญาณ...',
   },
   segment: {
     paragraphs: 'ย่อหน้า',
     keywords: 'คําสําคัญ',
     addKeyWord: 'เพิ่มคําสําคัญ',
     keywordError: 'ความยาวสูงสุดของคําหลักคือ 20',
-    characters: 'อักขระ',
     hitCount: 'จํานวนการดึงข้อมูล',
     vectorHash: 'แฮชเวกเตอร์:',
     questionPlaceholder: 'เพิ่มคําถามที่นี่',
@@ -361,6 +367,7 @@ const translation = {
     edited: 'แก้ไข',
     addChunk: 'เพิ่มก้อน',
     editedAt: 'แก้ไขที่',
+    dateTimeFormat: 'MM/DD/YYYY h:mm',
     childChunks_other: 'ก้อนเด็ก',
     editChildChunk: 'แก้ไข Child Chunk',
     parentChunk: 'ผู้ปกครอง-ก้อน',
@@ -388,6 +395,8 @@ const translation = {
     searchResults_other: 'ผลลัพธ์',
     regenerationSuccessMessage: 'คุณสามารถปิดหน้าต่างนี้ได้',
     childChunks_one: 'ก้อนเด็ก',
+    keywordDuplicate: 'คำสำคัญมีอยู่แล้ว',
+    keywordEmpty: 'คีย์เวิร์ดไม่สามารถว่างเปล่าได้',
   },
 }
 

@@ -1,15 +1,17 @@
 import { PLUGIN_TYPE_SEARCH_MAP } from './plugin-type-switch'
 import type { Plugin } from '@/app/components/plugins/types'
-import { PluginType } from '@/app/components/plugins/types'
+import { PluginCategoryEnum } from '@/app/components/plugins/types'
 import type {
   CollectionsAndPluginsSearchParams,
   MarketplaceCollection,
   PluginsSearchParams,
 } from '@/app/components/plugins/marketplace/types'
 import {
+  APP_VERSION,
+  IS_MARKETPLACE,
   MARKETPLACE_API_PREFIX,
-  MARKETPLACE_URL_PREFIX,
 } from '@/config'
+import { getMarketplaceUrl } from '@/utils/var'
 
 export const getPluginIconInMarketplace = (plugin: Plugin) => {
   if (plugin.type === 'bundle')
@@ -32,22 +34,32 @@ export const getFormattedPlugin = (bundle: any) => {
   }
 }
 
-export const getPluginLinkInMarketplace = (plugin: Plugin) => {
+export const getPluginLinkInMarketplace = (plugin: Plugin, params?: Record<string, string | undefined>) => {
   if (plugin.type === 'bundle')
-    return `${MARKETPLACE_URL_PREFIX}/bundles/${plugin.org}/${plugin.name}`
-  return `${MARKETPLACE_URL_PREFIX}/plugins/${plugin.org}/${plugin.name}`
+    return getMarketplaceUrl(`/bundles/${plugin.org}/${plugin.name}`, params)
+  return getMarketplaceUrl(`/plugins/${plugin.org}/${plugin.name}`, params)
+}
+
+export const getPluginDetailLinkInMarketplace = (plugin: Plugin) => {
+  if (plugin.type === 'bundle')
+    return `/bundles/${plugin.org}/${plugin.name}`
+  return `/plugins/${plugin.org}/${plugin.name}`
 }
 
 export const getMarketplacePluginsByCollectionId = async (collectionId: string, query?: CollectionsAndPluginsSearchParams) => {
-  let plugins = [] as Plugin[]
+  let plugins: Plugin[]
 
   try {
     const url = `${MARKETPLACE_API_PREFIX}/collections/${collectionId}/plugins`
+    const headers = new Headers({
+      'X-Dify-Version': !IS_MARKETPLACE ? APP_VERSION : '999.0.0',
+    })
     const marketplaceCollectionPluginsData = await globalThis.fetch(
       url,
       {
         cache: 'no-store',
         method: 'POST',
+        headers,
         body: JSON.stringify({
           category: query?.category,
           exclude: query?.exclude,
@@ -77,7 +89,10 @@ export const getMarketplaceCollectionsAndPlugins = async (query?: CollectionsAnd
       marketplaceUrl += `&condition=${query.condition}`
     if (query?.type)
       marketplaceUrl += `&type=${query.type}`
-    const marketplaceCollectionsData = await globalThis.fetch(marketplaceUrl, { cache: 'no-store' })
+    const headers = new Headers({
+      'X-Dify-Version': !IS_MARKETPLACE ? APP_VERSION : '999.0.0',
+    })
+    const marketplaceCollectionsData = await globalThis.fetch(marketplaceUrl, { headers, cache: 'no-store' })
     const marketplaceCollectionsDataJson = await marketplaceCollectionsData.json()
     marketplaceCollections = marketplaceCollectionsDataJson.data.collections
     await Promise.all(marketplaceCollections.map(async (collection: MarketplaceCollection) => {
@@ -99,16 +114,10 @@ export const getMarketplaceCollectionsAndPlugins = async (query?: CollectionsAnd
 }
 
 export const getMarketplaceListCondition = (pluginType: string) => {
-  if (pluginType === PluginType.tool)
-    return 'category=tool'
+  if ([PluginCategoryEnum.tool, PluginCategoryEnum.agent, PluginCategoryEnum.model, PluginCategoryEnum.datasource, PluginCategoryEnum.trigger].includes(pluginType as PluginCategoryEnum))
+    return `category=${pluginType}`
 
-  if (pluginType === PluginType.agent)
-    return 'category=agent-strategy'
-
-  if (pluginType === PluginType.model)
-    return 'category=model'
-
-  if (pluginType === PluginType.extension)
+  if (pluginType === PluginCategoryEnum.extension)
     return 'category=endpoint'
 
   if (pluginType === 'bundle')

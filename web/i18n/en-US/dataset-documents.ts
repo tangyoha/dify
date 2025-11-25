@@ -30,6 +30,8 @@ const translation = {
       delete: 'Delete',
       enableWarning: 'Archived file cannot be enabled',
       sync: 'Sync',
+      pause: 'Pause',
+      resume: 'Resume',
     },
     index: {
       enable: 'Enable',
@@ -37,6 +39,10 @@ const translation = {
       all: 'All',
       enableTip: 'The file can be indexed',
       disableTip: 'The file cannot be indexed',
+    },
+    sort: {
+      uploadTime: 'Upload Time',
+      hitCount: 'Retrieval Count',
     },
     status: {
       queuing: 'Queuing',
@@ -97,6 +103,9 @@ const translation = {
       upload_file: 'Upload File',
       notion: 'Sync form Notion',
       github: 'Sync form Github',
+      local_file: 'Local File',
+      website_crawl: 'Website Crawl',
+      online_document: 'Online Document',
     },
     type: {
       book: 'Book',
@@ -313,6 +322,7 @@ const translation = {
     },
   },
   embedding: {
+    waiting: 'Embedding waiting...',
     processing: 'Embedding processing...',
     paused: 'Embedding paused',
     completed: 'Embedding completed',
@@ -355,7 +365,9 @@ const translation = {
     newChildChunk: 'New Child Chunk',
     keywords: 'KEYWORDS',
     addKeyWord: 'Add keyword',
+    keywordEmpty: 'The keyword cannot be empty',
     keywordError: 'The maximum length of keyword is 20',
+    keywordDuplicate: 'The keyword already exists',
     characters_one: 'character',
     characters_other: 'characters',
     hitCount: 'Retrieval count',
@@ -386,6 +398,7 @@ const translation = {
     regenerationSuccessMessage: 'You can close this window.',
     edited: 'EDITED',
     editedAt: 'Edited at',
+    dateTimeFormat: 'MM/DD/YYYY h:mm',
     expandChunks: 'Expand chunks',
     collapseChunks: 'Collapse chunks',
   },

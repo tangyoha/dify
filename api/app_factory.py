@@ -5,6 +5,8 @@ from configs import dify_config
 from contexts.wrapper import RecyclableContextVar
 from dify_app import DifyApp
 
+logger = logging.getLogger(__name__)
+
 
 # ----------------------------
 # Application Factory Function
@@ -16,12 +18,16 @@ def create_flask_app_with_configs() -> DifyApp:
     """
     dify_app = DifyApp(__name__)
     dify_app.config.from_mapping(dify_config.model_dump())
+    dify_app.config["RESTX_INCLUDE_ALL_MODELS"] = True
 
     # add before request hook
     @dify_app.before_request
     def before_request():
         # add an unique identifier to each request
         RecyclableContextVar.increment_thread_recycles()
+
+    # Capture the decorator's return value to avoid pyright reportUnusedFunction
+    _ = before_request
 
     return dify_app
 
@@ -32,7 +38,7 @@ def create_app() -> DifyApp:
     initialize_extensions(app)
     end_time = time.perf_counter()
     if dify_config.DEBUG:
-        logging.info(f"Finished create_app ({round((end_time - start_time) * 1000, 2)} ms)")
+        logger.info("Finished create_app (%s ms)", round((end_time - start_time) * 1000, 2))
     return app
 
 
@@ -51,6 +57,7 @@ def initialize_extensions(app: DifyApp):
         ext_login,
         ext_mail,
         ext_migrate,
+        ext_orjson,
         ext_otel,
         ext_proxy_fix,
         ext_redis,
@@ -67,6 +74,7 @@ def initialize_extensions(app: DifyApp):
         ext_logging,
         ext_warnings,
         ext_import_modules,
+        ext_orjson,
         ext_set_secretkey,
         ext_compress,
         ext_code_based_extension,
@@ -91,14 +99,14 @@ def initialize_extensions(app: DifyApp):
         is_enabled = ext.is_enabled() if hasattr(ext, "is_enabled") else True
         if not is_enabled:
             if dify_config.DEBUG:
-                logging.info(f"Skipped {short_name}")
+                logger.info("Skipped %s", short_name)
             continue
 
         start_time = time.perf_counter()
         ext.init_app(app)
         end_time = time.perf_counter()
         if dify_config.DEBUG:
-            logging.info(f"Loaded {short_name} ({round((end_time - start_time) * 1000, 2)} ms)")
+            logger.info("Loaded %s (%s ms)", short_name, round((end_time - start_time) * 1000, 2))
 
 
 def create_migrations_app():

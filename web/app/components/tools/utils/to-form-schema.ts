@@ -1,14 +1,35 @@
+import { FormTypeEnum } from '@/app/components/header/account-setting/model-provider-page/declarations'
+import { VarType as VarKindType } from '@/app/components/workflow/nodes/tool/types'
+import type { TriggerEventParameter } from '../../plugins/types'
 import type { ToolCredential, ToolParameter } from '../types'
+
 export const toType = (type: string) => {
   switch (type) {
     case 'string':
       return 'text-input'
     case 'number':
       return 'number-input'
+    case 'boolean':
+      return 'checkbox'
     default:
       return type
   }
 }
+
+export const triggerEventParametersToFormSchemas = (parameters: TriggerEventParameter[]) => {
+  if (!parameters?.length)
+    return []
+
+  return parameters.map((parameter) => {
+    return {
+      ...parameter,
+      type: toType(parameter.type),
+      _type: parameter.type,
+      tooltip: parameter.description,
+    }
+  })
+}
+
 export const toolParametersToFormSchemas = (parameters: ToolParameter[]) => {
   if (!parameters)
     return []
@@ -40,6 +61,7 @@ export const toolCredentialToFormSchemas = (parameters: ToolCredential[]) => {
     return {
       ...parameter,
       variable: parameter.name,
+      type: toType(parameter.type),
       label: parameter.label,
       tooltip: parameter.help,
       show_on: [],
@@ -54,24 +76,67 @@ export const toolCredentialToFormSchemas = (parameters: ToolCredential[]) => {
   return formSchemas
 }
 
-export const addDefaultValue = (value: Record<string, any>, formSchemas: { variable: string; default?: any }[]) => {
+export const addDefaultValue = (value: Record<string, any>, formSchemas: { variable: string; type: string; default?: any }[]) => {
   const newValues = { ...value }
   formSchemas.forEach((formSchema) => {
     const itemValue = value[formSchema.variable]
     if ((formSchema.default !== undefined) && (value === undefined || itemValue === null || itemValue === '' || itemValue === undefined))
       newValues[formSchema.variable] = formSchema.default
+
+    // Fix: Convert boolean field values to proper boolean type
+    if (formSchema.type === 'boolean' && itemValue !== undefined && itemValue !== null && itemValue !== '') {
+      if (typeof itemValue === 'string')
+        newValues[formSchema.variable] = itemValue === 'true' || itemValue === '1' || itemValue === 'True'
+      else if (typeof itemValue === 'number')
+        newValues[formSchema.variable] = itemValue === 1
+      else if (typeof itemValue === 'boolean')
+        newValues[formSchema.variable] = itemValue
+    }
   })
   return newValues
 }
 
-export const generateFormValue = (value: Record<string, any>, formSchemas: { variable: string; default?: any }[], isReasoning = false) => {
+const correctInitialData = (type: string, target: any, defaultValue: any) => {
+  if (type === 'text-input' || type === 'secret-input')
+    target.type = 'mixed'
+
+  if (type === 'boolean') {
+    if (typeof defaultValue === 'string')
+      target.value = defaultValue === 'true' || defaultValue === '1'
+
+    if (typeof defaultValue === 'boolean')
+      target.value = defaultValue
+
+    if (typeof defaultValue === 'number')
+      target.value = defaultValue === 1
+  }
+
+  if (type === 'number-input') {
+    if (typeof defaultValue === 'string' && defaultValue !== '')
+      target.value = Number.parseFloat(defaultValue)
+  }
+
+  if (type === 'app-selector' || type === 'model-selector')
+    target.value = defaultValue
+
+  return target
+}
+
+export const generateFormValue = (value: Record<string, any>, formSchemas: { variable: string; default?: any; type: string }[], isReasoning = false) => {
   const newValues = {} as any
   formSchemas.forEach((formSchema) => {
     const itemValue = value[formSchema.variable]
     if ((formSchema.default !== undefined) && (value === undefined || itemValue === null || itemValue === '' || itemValue === undefined)) {
+      const value = formSchema.default
       newValues[formSchema.variable] = {
-        ...(isReasoning ? { value: null, auto: 1 } : { value: formSchema.default }),
+        value: {
+          type: 'constant',
+          value: formSchema.default,
+        },
+        ...(isReasoning ? { auto: 1, value: null } : {}),
       }
+      if (!isReasoning)
+        newValues[formSchema.variable].value = correctInitialData(formSchema.type, newValues[formSchema.variable].value, value)
     }
   })
   return newValues
@@ -80,7 +145,9 @@ export const generateFormValue = (value: Record<string, any>, formSchemas: { var
 export const getPlainValue = (value: Record<string, any>) => {
   const plainValue = { ...value }
   Object.keys(plainValue).forEach((key) => {
-    plainValue[key] = value[key].value
+    plainValue[key] = {
+      ...value[key].value,
+    }
   })
   return plainValue
 }
@@ -93,4 +160,66 @@ export const getStructureValue = (value: Record<string, any>) => {
     }
   })
   return newValue
+}
+
+export const getConfiguredValue = (value: Record<string, any>, formSchemas: { variable: string; type: string; default?: any }[]) => {
+  const newValues = { ...value }
+  formSchemas.forEach((formSchema) => {
+    const itemValue = value[formSchema.variable]
+    if ((formSchema.default !== undefined) && (value === undefined || itemValue === null || itemValue === '' || itemValue === undefined)) {
+      const value = formSchema.default
+      newValues[formSchema.variable] = {
+        type: 'constant',
+        value: typeof formSchema.default === 'string' ? formSchema.default.replace(/\n/g, '\\n') : formSchema.default,
+      }
+      newValues[formSchema.variable] = correctInitialData(formSchema.type, newValues[formSchema.variable], value)
+    }
+  })
+  return newValues
+}
+
+const getVarKindType = (type: FormTypeEnum) => {
+  if (type === FormTypeEnum.file || type === FormTypeEnum.files)
+    return VarKindType.variable
+  if (type === FormTypeEnum.select || type === FormTypeEnum.checkbox || type === FormTypeEnum.textNumber)
+    return VarKindType.constant
+  if (type === FormTypeEnum.textInput || type === FormTypeEnum.secretInput)
+    return VarKindType.mixed
+}
+
+export const generateAgentToolValue = (value: Record<string, any>, formSchemas: { variable: string; default?: any; type: string }[], isReasoning = false) => {
+  const newValues = {} as any
+  if (!isReasoning) {
+    formSchemas.forEach((formSchema) => {
+      const itemValue = value[formSchema.variable]
+      newValues[formSchema.variable] = {
+        value: {
+          type: 'constant',
+          value: itemValue.value,
+        },
+      }
+      newValues[formSchema.variable].value = correctInitialData(formSchema.type, newValues[formSchema.variable].value, itemValue.value)
+    })
+  }
+  else {
+    formSchemas.forEach((formSchema) => {
+      const itemValue = value[formSchema.variable]
+      if (itemValue.auto === 1) {
+        newValues[formSchema.variable] = {
+          auto: 1,
+          value: null,
+        }
+      }
+      else {
+        newValues[formSchema.variable] = {
+          auto: 0,
+          value: itemValue.value || {
+            type: getVarKindType(formSchema.type as FormTypeEnum),
+            value: null,
+          },
+        }
+      }
+    })
+  }
+  return newValues
 }

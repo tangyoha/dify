@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBoolean } from 'ahooks'
 import Field from './field'
-import type { LangFuseConfig, LangSmithConfig, OpikConfig, WeaveConfig } from './type'
+import type { AliyunConfig, ArizeConfig, DatabricksConfig, LangFuseConfig, LangSmithConfig, MLflowConfig, OpikConfig, PhoenixConfig, TencentConfig, WeaveConfig } from './type'
 import { TracingProvider } from './type'
 import { docURL } from './config'
 import {
@@ -22,14 +22,27 @@ import Divider from '@/app/components/base/divider'
 type Props = {
   appId: string
   type: TracingProvider
-  payload?: LangSmithConfig | LangFuseConfig | OpikConfig | WeaveConfig | null
+  payload?: ArizeConfig | PhoenixConfig | LangSmithConfig | LangFuseConfig | OpikConfig | WeaveConfig | AliyunConfig | MLflowConfig | DatabricksConfig | TencentConfig | null
   onRemoved: () => void
   onCancel: () => void
-  onSaved: (payload: LangSmithConfig | LangFuseConfig | OpikConfig | WeaveConfig) => void
+  onSaved: (payload: ArizeConfig | PhoenixConfig | LangSmithConfig | LangFuseConfig | OpikConfig | WeaveConfig | AliyunConfig | MLflowConfig | DatabricksConfig | TencentConfig) => void
   onChosen: (provider: TracingProvider) => void
 }
 
 const I18N_PREFIX = 'app.tracing.configProvider'
+
+const arizeConfigTemplate = {
+  api_key: '',
+  space_id: '',
+  project: '',
+  endpoint: '',
+}
+
+const phoenixConfigTemplate = {
+  api_key: '',
+  project: '',
+  endpoint: '',
+}
 
 const langSmithConfigTemplate = {
   api_key: '',
@@ -55,6 +68,34 @@ const weaveConfigTemplate = {
   entity: '',
   project: '',
   endpoint: '',
+  host: '',
+}
+
+const aliyunConfigTemplate = {
+  app_name: '',
+  license_key: '',
+  endpoint: '',
+}
+
+const mlflowConfigTemplate = {
+  tracking_uri: '',
+  experiment_id: '',
+  username: '',
+  password: '',
+}
+
+const databricksConfigTemplate = {
+  experiment_id: '',
+  host: '',
+  client_id: '',
+  client_secret: '',
+  personal_access_token: '',
+}
+
+const tencentConfigTemplate = {
+  token: '',
+  endpoint: '',
+  service_name: '',
 }
 
 const ProviderConfigModal: FC<Props> = ({
@@ -70,11 +111,17 @@ const ProviderConfigModal: FC<Props> = ({
   const isEdit = !!payload
   const isAdd = !isEdit
   const [isSaving, setIsSaving] = useState(false)
-  const [config, setConfig] = useState<LangSmithConfig | LangFuseConfig | OpikConfig | WeaveConfig>((() => {
+  const [config, setConfig] = useState<ArizeConfig | PhoenixConfig | LangSmithConfig | LangFuseConfig | OpikConfig | WeaveConfig | AliyunConfig | MLflowConfig | DatabricksConfig | TencentConfig>((() => {
     if (isEdit)
       return payload
 
-    if (type === TracingProvider.langSmith)
+    if (type === TracingProvider.arize)
+      return arizeConfigTemplate
+
+    else if (type === TracingProvider.phoenix)
+      return phoenixConfigTemplate
+
+    else if (type === TracingProvider.langSmith)
       return langSmithConfigTemplate
 
     else if (type === TracingProvider.langfuse)
@@ -82,6 +129,18 @@ const ProviderConfigModal: FC<Props> = ({
 
     else if (type === TracingProvider.opik)
       return opikConfigTemplate
+
+    else if (type === TracingProvider.aliyun)
+      return aliyunConfigTemplate
+
+    else if (type === TracingProvider.mlflow)
+      return mlflowConfigTemplate
+
+    else if (type === TracingProvider.databricks)
+      return databricksConfigTemplate
+
+    else if (type === TracingProvider.tencent)
+      return tencentConfigTemplate
 
     return weaveConfigTemplate
   })())
@@ -114,6 +173,24 @@ const ProviderConfigModal: FC<Props> = ({
 
   const checkValid = useCallback(() => {
     let errorMessage = ''
+    if (type === TracingProvider.arize) {
+      const postData = config as ArizeConfig
+      if (!postData.api_key)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'API Key' })
+      if (!postData.space_id)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Space ID' })
+      if (!errorMessage && !postData.project)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: t(`${I18N_PREFIX}.project`) })
+    }
+
+    if (type === TracingProvider.phoenix) {
+      const postData = config as PhoenixConfig
+      if (!postData.api_key)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'API Key' })
+      if (!errorMessage && !postData.project)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: t(`${I18N_PREFIX}.project`) })
+    }
+
     if (type === TracingProvider.langSmith) {
       const postData = config as LangSmithConfig
       if (!postData.api_key)
@@ -143,6 +220,40 @@ const ProviderConfigModal: FC<Props> = ({
         errorMessage = t('common.errorMsg.fieldRequired', { field: 'API Key' })
       if (!errorMessage && !postData.project)
         errorMessage = t('common.errorMsg.fieldRequired', { field: t(`${I18N_PREFIX}.project`) })
+    }
+
+    if (type === TracingProvider.aliyun) {
+      const postData = config as AliyunConfig
+      if (!errorMessage && !postData.app_name)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'App Name' })
+      if (!errorMessage && !postData.license_key)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'License Key' })
+      if (!errorMessage && !postData.endpoint)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Endpoint' })
+    }
+
+    if (type === TracingProvider.mlflow) {
+      const postData = config as MLflowConfig
+      if (!errorMessage && !postData.tracking_uri)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Tracking URI' })
+    }
+
+    if (type === TracingProvider.databricks) {
+      const postData = config as DatabricksConfig
+      if (!errorMessage && !postData.experiment_id)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Experiment ID' })
+      if (!errorMessage && !postData.host)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Host' })
+    }
+
+    if (type === TracingProvider.tencent) {
+      const postData = config as TencentConfig
+      if (!errorMessage && !postData.token)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Token' })
+      if (!errorMessage && !postData.endpoint)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Endpoint' })
+      if (!errorMessage && !postData.service_name)
+        errorMessage = t('common.errorMsg.fieldRequired', { field: 'Service Name' })
     }
 
     return errorMessage
@@ -194,6 +305,121 @@ const ProviderConfigModal: FC<Props> = ({
                     </div>
 
                     <div className='space-y-4'>
+                      {type === TracingProvider.arize && (
+                        <>
+                          <Field
+                            label='API Key'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as ArizeConfig).api_key}
+                            onChange={handleConfigChange('api_key')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: 'API Key' })!}
+                          />
+                          <Field
+                            label='Space ID'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as ArizeConfig).space_id}
+                            onChange={handleConfigChange('space_id')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: 'Space ID' })!}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.project`)!}
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as ArizeConfig).project}
+                            onChange={handleConfigChange('project')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.project`) })!}
+                          />
+                          <Field
+                            label='Endpoint'
+                            labelClassName='!text-sm'
+                            value={(config as ArizeConfig).endpoint}
+                            onChange={handleConfigChange('endpoint')}
+                            placeholder={'https://otlp.arize.com'}
+                          />
+                        </>
+                      )}
+                      {type === TracingProvider.phoenix && (
+                        <>
+                          <Field
+                            label='API Key'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as PhoenixConfig).api_key}
+                            onChange={handleConfigChange('api_key')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: 'API Key' })!}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.project`)!}
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as PhoenixConfig).project}
+                            onChange={handleConfigChange('project')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.project`) })!}
+                          />
+                          <Field
+                            label='Endpoint'
+                            labelClassName='!text-sm'
+                            value={(config as PhoenixConfig).endpoint}
+                            onChange={handleConfigChange('endpoint')}
+                            placeholder={'https://app.phoenix.arize.com'}
+                          />
+                        </>
+                      )}
+                      {type === TracingProvider.aliyun && (
+                        <>
+                          <Field
+                            label='License Key'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as AliyunConfig).license_key}
+                            onChange={handleConfigChange('license_key')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: 'License Key' })!}
+                          />
+                          <Field
+                            label='Endpoint'
+                            labelClassName='!text-sm'
+                            value={(config as AliyunConfig).endpoint}
+                            onChange={handleConfigChange('endpoint')}
+                            placeholder={'https://tracing.arms.aliyuncs.com'}
+                          />
+                          <Field
+                            label='App Name'
+                            labelClassName='!text-sm'
+                            value={(config as AliyunConfig).app_name}
+                            onChange={handleConfigChange('app_name')}
+                          />
+                        </>
+                      )}
+                      {type === TracingProvider.tencent && (
+                        <>
+                          <Field
+                            label='Token'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as TencentConfig).token}
+                            onChange={handleConfigChange('token')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: 'Token' })!}
+                          />
+                          <Field
+                            label='Endpoint'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as TencentConfig).endpoint}
+                            onChange={handleConfigChange('endpoint')}
+                            placeholder='https://your-region.cls.tencentcs.com'
+                          />
+                          <Field
+                            label='Service Name'
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as TencentConfig).service_name}
+                            onChange={handleConfigChange('service_name')}
+                            placeholder='dify_app'
+                          />
+                        </>
+                      )}
                       {type === TracingProvider.weave && (
                         <>
                           <Field
@@ -225,6 +451,13 @@ const ProviderConfigModal: FC<Props> = ({
                             value={(config as WeaveConfig).endpoint}
                             onChange={handleConfigChange('endpoint')}
                             placeholder={'https://trace.wandb.ai/'}
+                          />
+                          <Field
+                            label='Host'
+                            labelClassName='!text-sm'
+                            value={(config as WeaveConfig).host}
+                            onChange={handleConfigChange('host')}
+                            placeholder={'https://api.wandb.ai'}
                           />
                         </>
                       )}
@@ -315,6 +548,81 @@ const ProviderConfigModal: FC<Props> = ({
                           />
                         </>
                       )}
+                      {type === TracingProvider.mlflow && (
+                        <>
+                          <Field
+                            label={t(`${I18N_PREFIX}.trackingUri`)!}
+                            labelClassName='!text-sm'
+                            value={(config as MLflowConfig).tracking_uri}
+                            isRequired
+                            onChange={handleConfigChange('tracking_uri')}
+                            placeholder={'http://localhost:5000'}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.experimentId`)!}
+                            labelClassName='!text-sm'
+                            isRequired
+                            value={(config as MLflowConfig).experiment_id}
+                            onChange={handleConfigChange('experiment_id')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.experimentId`) })!}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.username`)!}
+                            labelClassName='!text-sm'
+                            value={(config as MLflowConfig).username}
+                            onChange={handleConfigChange('username')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.username`) })!}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.password`)!}
+                            labelClassName='!text-sm'
+                            value={(config as MLflowConfig).password}
+                            onChange={handleConfigChange('password')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.password`) })!}
+                          />
+                        </>
+                      )}
+                      {type === TracingProvider.databricks && (
+                        <>
+                          <Field
+                            label={t(`${I18N_PREFIX}.experimentId`)!}
+                            labelClassName='!text-sm'
+                            value={(config as DatabricksConfig).experiment_id}
+                            onChange={handleConfigChange('experiment_id')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.experimentId`) })!}
+                            isRequired
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.databricksHost`)!}
+                            labelClassName='!text-sm'
+                            value={(config as DatabricksConfig).host}
+                            onChange={handleConfigChange('host')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.databricksHost`) })!}
+                            isRequired
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.clientId`)!}
+                            labelClassName='!text-sm'
+                            value={(config as DatabricksConfig).client_id}
+                            onChange={handleConfigChange('client_id')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.clientId`) })!}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.clientSecret`)!}
+                            labelClassName='!text-sm'
+                            value={(config as DatabricksConfig).client_secret}
+                            onChange={handleConfigChange('client_secret')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.clientSecret`) })!}
+                          />
+                          <Field
+                            label={t(`${I18N_PREFIX}.personalAccessToken`)!}
+                            labelClassName='!text-sm'
+                            value={(config as DatabricksConfig).personal_access_token}
+                            onChange={handleConfigChange('personal_access_token')}
+                            placeholder={t(`${I18N_PREFIX}.placeholder`, { key: t(`${I18N_PREFIX}.personalAccessToken`) })!}
+                          />
+                        </>
+                      )}
                     </div>
                     <div className='my-8 flex h-8 items-center justify-between'>
                       <a
@@ -334,7 +642,7 @@ const ProviderConfigModal: FC<Props> = ({
                             >
                               <span className='text-[#D92D20]'>{t('common.operation.remove')}</span>
                             </Button>
-                            <Divider className='mx-3 h-[18px]' />
+                            <Divider type='vertical' className='mx-3 h-[18px]' />
                           </>
                         )}
                         <Button

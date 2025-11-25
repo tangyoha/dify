@@ -33,6 +33,7 @@ type OperationProps = {
   hasWorkflowProcess: boolean
   noChatInput?: boolean
 }
+
 const Operation: FC<OperationProps> = ({
   item,
   question,
@@ -72,7 +73,7 @@ const Operation: FC<OperationProps> = ({
     return messageContent
   }, [agent_thoughts, messageContent])
 
-  const handleFeedback = async (rating: 'like' | 'dislike' | null) => {
+  const handleFeedback = async (rating: 'like' | 'dislike' | null, content?: string) => {
     if (!config?.supportFeedback || !onFeedback)
       return
 

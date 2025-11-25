@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import { useDebounce, useDebounceFn } from 'ahooks'
-import { groupBy } from 'lodash-es'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import { RiDraftLine, RiExternalLinkLine } from '@remixicon/react'
 import AutoDisabledDocument from '../common/document-status-with-action/auto-disabled-document'
@@ -13,24 +12,25 @@ import s from './style.module.css'
 import Loading from '@/app/components/base/loading'
 import Button from '@/app/components/base/button'
 import Input from '@/app/components/base/input'
-import { get } from '@/service/base'
-import { createDocument } from '@/service/datasets'
-import { useDatasetDetailContext } from '@/context/dataset-detail'
-import { NotionPageSelectorModal } from '@/app/components/base/notion-page-selector'
-import type { NotionPage } from '@/models/common'
-import type { CreateDocumentReq } from '@/models/datasets'
-import { DataSourceType, ProcessMode } from '@/models/datasets'
+import { useDatasetDetailContextWithSelector } from '@/context/dataset-detail'
+import { DataSourceType } from '@/models/datasets'
 import IndexFailed from '@/app/components/datasets/common/document-status-with-action/index-failed'
 import { useProviderContext } from '@/context/provider-context'
 import cn from '@/utils/classnames'
-import { useDocumentList, useInvalidDocumentDetailKey, useInvalidDocumentList } from '@/service/knowledge/use-document'
+import { useDocumentList, useInvalidDocumentDetail, useInvalidDocumentList } from '@/service/knowledge/use-document'
 import { useInvalid } from '@/service/use-base'
 import { useChildSegmentListKey, useSegmentListKey } from '@/service/knowledge/use-segment'
+import useDocumentListQueryState from './hooks/use-document-list-query-state'
 import useEditDocumentMetadata from '../metadata/hooks/use-edit-dataset-metadata'
 import DatasetMetadataDrawer from '../metadata/metadata-dataset/dataset-metadata-drawer'
 import StatusWithAction from '../common/document-status-with-action/status-with-action'
-import { LanguagesSupported } from '@/i18n/language'
-import { getLocaleOnClient } from '@/i18n'
+import { useDocLink } from '@/context/i18n'
+import Chip from '../../base/chip'
+import Sort from '../../base/sort'
+import type { SortType } from '@/service/datasets'
+import type { Item } from '@/app/components/base/select'
+import { useIndexStatus } from './status-item/hooks'
+import { normalizeStatusForQuery, sanitizeStatusValue } from './status-filter'
 
 const FolderPlusIcon = ({ className }: React.SVGProps<SVGElement>) => {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={className ?? ''}>
@@ -81,36 +81,100 @@ type IDocumentsProps = {
   datasetId: string
 }
 
-export const fetcher = (url: string) => get(url, {}, {})
-const DEFAULT_LIMIT = 10
-
 const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
   const { t } = useTranslation()
+  const docLink = useDocLink()
   const { plan } = useProviderContext()
   const isFreePlan = plan.type === 'sandbox'
+  const { query, updateQuery } = useDocumentListQueryState()
   const [inputValue, setInputValue] = useState<string>('') // the input value
   const [searchValue, setSearchValue] = useState<string>('')
-  const [currPage, setCurrPage] = React.useState<number>(0)
-  const [limit, setLimit] = useState<number>(DEFAULT_LIMIT)
+  const [statusFilterValue, setStatusFilterValue] = useState<string>(() => sanitizeStatusValue(query.status))
+  const [sortValue, setSortValue] = useState<SortType>(query.sort)
+  const DOC_INDEX_STATUS_MAP = useIndexStatus()
+  const [currPage, setCurrPage] = React.useState<number>(query.page - 1) // Convert to 0-based index
+  const [limit, setLimit] = useState<number>(query.limit)
+
   const router = useRouter()
-  const { dataset } = useDatasetDetailContext()
-  const [notionPageSelectorModalVisible, setNotionPageSelectorModalVisible] = useState(false)
+  const dataset = useDatasetDetailContextWithSelector(s => s.dataset)
   const [timerCanRun, setTimerCanRun] = useState(true)
   const isDataSourceNotion = dataset?.data_source_type === DataSourceType.NOTION
   const isDataSourceWeb = dataset?.data_source_type === DataSourceType.WEB
   const isDataSourceFile = dataset?.data_source_type === DataSourceType.FILE
   const embeddingAvailable = !!dataset?.embedding_available
-  const locale = getLocaleOnClient()
   const debouncedSearchValue = useDebounce(searchValue, { wait: 500 })
 
-  const { data: documentsRes, isFetching: isListLoading } = useDocumentList({
+  const statusFilterItems: Item[] = useMemo(() => [
+    { value: 'all', name: t('datasetDocuments.list.index.all') as string },
+    { value: 'queuing', name: DOC_INDEX_STATUS_MAP.queuing.text },
+    { value: 'indexing', name: DOC_INDEX_STATUS_MAP.indexing.text },
+    { value: 'paused', name: DOC_INDEX_STATUS_MAP.paused.text },
+    { value: 'error', name: DOC_INDEX_STATUS_MAP.error.text },
+    { value: 'available', name: DOC_INDEX_STATUS_MAP.available.text },
+    { value: 'enabled', name: DOC_INDEX_STATUS_MAP.enabled.text },
+    { value: 'disabled', name: DOC_INDEX_STATUS_MAP.disabled.text },
+    { value: 'archived', name: DOC_INDEX_STATUS_MAP.archived.text },
+  ], [DOC_INDEX_STATUS_MAP, t])
+  const normalizedStatusFilterValue = useMemo(() => normalizeStatusForQuery(statusFilterValue), [statusFilterValue])
+  const sortItems: Item[] = useMemo(() => [
+    { value: 'created_at', name: t('datasetDocuments.list.sort.uploadTime') as string },
+    { value: 'hit_count', name: t('datasetDocuments.list.sort.hitCount') as string },
+  ], [t])
+
+  // Initialize search value from URL on mount
+  useEffect(() => {
+    if (query.keyword) {
+      setInputValue(query.keyword)
+      setSearchValue(query.keyword)
+    }
+  }, []) // Only run on mount
+
+  // Sync local state with URL query changes
+  useEffect(() => {
+    setCurrPage(query.page - 1)
+    setLimit(query.limit)
+    if (query.keyword !== searchValue) {
+      setInputValue(query.keyword)
+      setSearchValue(query.keyword)
+    }
+    setStatusFilterValue((prev) => {
+      const nextValue = sanitizeStatusValue(query.status)
+      return prev === nextValue ? prev : nextValue
+    })
+    setSortValue(query.sort)
+  }, [query])
+
+  // Update URL when pagination changes
+  const handlePageChange = (newPage: number) => {
+    setCurrPage(newPage)
+    updateQuery({ page: newPage + 1 }) // Pagination emits 0-based page, convert to 1-based for URL
+  }
+
+  // Update URL when limit changes
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit)
+    setCurrPage(0) // Reset to first page when limit changes
+    updateQuery({ limit: newLimit, page: 1 })
+  }
+
+  // Update URL when search changes
+  useEffect(() => {
+    if (debouncedSearchValue !== query.keyword) {
+      setCurrPage(0) // Reset to first page when search changes
+      updateQuery({ keyword: debouncedSearchValue, page: 1 })
+    }
+  }, [debouncedSearchValue, query.keyword, updateQuery])
+
+  const { data: documentsRes, isLoading: isListLoading } = useDocumentList({
     datasetId,
     query: {
       page: currPage + 1,
       limit,
       keyword: debouncedSearchValue,
+      status: normalizedStatusFilterValue,
+      sort: sortValue,
     },
-    refetchInterval: (isDataSourceNotion && timerCanRun) ? 2500 : 0,
+    refetchInterval: timerCanRun ? 2500 : 0,
   })
 
   const invalidDocumentList = useInvalidDocumentList(datasetId)
@@ -121,10 +185,9 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
       if (totalPages < currPage + 1)
         setCurrPage(totalPages === 0 ? 0 : totalPages - 1)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentsRes])
 
-  const invalidDocumentDetail = useInvalidDocumentDetailKey()
+  const invalidDocumentDetail = useInvalidDocumentDetail()
   const invalidChunkList = useInvalid(useSegmentListKey)
   const invalidChildChunkList = useInvalid(useChildSegmentListKey)
 
@@ -135,13 +198,12 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
       invalidChunkList()
       invalidChildChunkList()
     }, 5000)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const documentsWithProgress = useMemo(() => {
+  useEffect(() => {
     let completedNum = 0
     let percent = 0
-    const documentsData = documentsRes?.data?.map((documentItem) => {
+    documentsRes?.data?.forEach((documentItem) => {
       const { indexing_status, completed_segments, total_segments } = documentItem
       const isEmbedded = indexing_status === 'completed' || indexing_status === 'paused' || indexing_status === 'error'
 
@@ -162,71 +224,38 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
         percent,
       }
     })
-    if (completedNum === documentsRes?.data?.length)
-      setTimerCanRun(false)
-    return {
-      ...documentsRes,
-      data: documentsData,
-    }
-  }, [documentsRes])
+
+    const hasIncompleteDocuments = completedNum !== documentsRes?.data?.length
+    const transientStatuses = ['queuing', 'indexing', 'paused']
+    const shouldForcePolling = normalizedStatusFilterValue === 'all'
+      ? false
+      : transientStatuses.includes(normalizedStatusFilterValue)
+    setTimerCanRun(shouldForcePolling || hasIncompleteDocuments)
+  }, [documentsRes, normalizedStatusFilterValue])
   const total = documentsRes?.total || 0
 
   const routeToDocCreate = () => {
-    if (isDataSourceNotion) {
-      setNotionPageSelectorModalVisible(true)
+    // if dataset is created from pipeline, go to create from pipeline page
+    if (dataset?.runtime_mode === 'rag_pipeline') {
+      router.push(`/datasets/${datasetId}/documents/create-from-pipeline`)
       return
     }
     router.push(`/datasets/${datasetId}/documents/create`)
   }
 
-  const handleSaveNotionPageSelected = async (selectedPages: NotionPage[]) => {
-    const workspacesMap = groupBy(selectedPages, 'workspace_id')
-    const workspaces = Object.keys(workspacesMap).map((workspaceId) => {
-      return {
-        workspaceId,
-        pages: workspacesMap[workspaceId],
-      }
-    })
-    const params = {
-      data_source: {
-        type: dataset?.data_source_type,
-        info_list: {
-          data_source_type: dataset?.data_source_type,
-          notion_info_list: workspaces.map((workspace) => {
-            return {
-              workspace_id: workspace.workspaceId,
-              pages: workspace.pages.map((page) => {
-                const { page_id, page_name, page_icon, type } = page
-                return {
-                  page_id,
-                  page_name,
-                  page_icon,
-                  type,
-                }
-              }),
-            }
-          }),
-        },
-      },
-      indexing_technique: dataset?.indexing_technique,
-      process_rule: {
-        rules: {},
-        mode: ProcessMode.general,
-      },
-    } as CreateDocumentReq
-
-    await createDocument({
-      datasetId,
-      body: params,
-    })
-    invalidDocumentList()
-    setTimerCanRun(true)
-    // mutateDatasetIndexingStatus(undefined, { revalidate: true })
-    setNotionPageSelectorModalVisible(false)
-  }
-
-  const documentsList = isDataSourceNotion ? documentsWithProgress?.data : documentsRes?.data
+  const documentsList = documentsRes?.data
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
+  // Clear selection when search changes to avoid confusion
+  useEffect(() => {
+    if (searchValue !== query.keyword)
+      setSelectedIds([])
+  }, [searchValue, query.keyword])
+
+  useEffect(() => {
+    setSelectedIds([])
+  }, [normalizedStatusFilterValue])
+
   const { run: handleSearch } = useDebounceFn(() => {
     setSearchValue(inputValue)
   }, { wait: 500 })
@@ -254,7 +283,7 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
   })
 
   return (
-    <div className='flex h-full flex-col overflow-y-auto'>
+    <div className='flex h-full flex-col'>
       <div className='flex flex-col justify-center gap-1 px-6 pt-4'>
         <h1 className='text-base font-semibold text-text-primary'>{t('datasetDocuments.list.title')}</h1>
         <div className='flex items-center space-x-0.5 text-sm font-normal text-text-tertiary'>
@@ -262,27 +291,58 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
           <a
             className='flex items-center text-text-accent'
             target='_blank'
-            href={
-              locale === LanguagesSupported[1]
-                ? 'https://docs.dify.ai/zh-hans/guides/knowledge-base/integrate-knowledge-within-application'
-                : 'https://docs.dify.ai/en/guides/knowledge-base/integrate-knowledge-within-application'
-            }
+            href={docLink('/guides/knowledge-base/integrate-knowledge-within-application')}
           >
             <span>{t('datasetDocuments.list.learnMore')}</span>
             <RiExternalLinkLine className='h-3 w-3' />
           </a>
         </div>
       </div>
-      <div className='flex flex-1 flex-col px-6 py-4'>
+      <div className='flex h-0 grow flex-col px-6 pt-4'>
         <div className='flex flex-wrap items-center justify-between'>
-          <Input
-            showLeftIcon
-            showClearIcon
-            wrapperClassName='!w-[200px]'
-            value={inputValue}
-            onChange={e => handleInputChange(e.target.value)}
-            onClear={() => handleInputChange('')}
-          />
+          <div className='flex items-center gap-2'>
+            <Chip
+              className='w-[160px]'
+              showLeftIcon={false}
+              value={statusFilterValue}
+              items={statusFilterItems}
+              onSelect={(item) => {
+                const selectedValue = sanitizeStatusValue(item?.value ? String(item.value) : '')
+                setStatusFilterValue(selectedValue)
+                setCurrPage(0)
+                updateQuery({ status: selectedValue, page: 1 })
+              }}
+              onClear={() => {
+                if (statusFilterValue === 'all')
+                  return
+                setStatusFilterValue('all')
+                setCurrPage(0)
+                updateQuery({ status: 'all', page: 1 })
+              }}
+            />
+            <Input
+              showLeftIcon
+              showClearIcon
+              wrapperClassName='!w-[200px]'
+              value={inputValue}
+              onChange={e => handleInputChange(e.target.value)}
+              onClear={() => handleInputChange('')}
+            />
+            <div className='h-3.5 w-px bg-divider-regular'></div>
+            <Sort
+              order={sortValue.startsWith('-') ? '-' : ''}
+              value={sortValue.replace('-', '')}
+              items={sortItems}
+              onSelect={(value) => {
+                const next = String(value) as SortType
+                if (next === sortValue)
+                  return
+                setSortValue(next)
+                setCurrPage(0)
+                updateQuery({ sort: next, page: 1 })
+              }}
+            />
+          </div>
           <div className='flex !h-8 items-center justify-center gap-2'>
             {!isFreePlan && <AutoDisabledDocument datasetId={datasetId} />}
             <IndexFailed datasetId={datasetId} />
@@ -317,31 +377,36 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
         </div>
         {isListLoading
           ? <Loading type='app' />
+          // eslint-disable-next-line sonarjs/no-nested-conditional
           : total > 0
-            ? <List
-              embeddingAvailable={embeddingAvailable}
-              documents={documentsList || []}
-              datasetId={datasetId}
-              onUpdate={handleUpdate}
-              selectedIds={selectedIds}
-              onSelectedIdChange={setSelectedIds}
-              pagination={{
-                total,
-                limit,
-                onLimitChange: setLimit,
-                current: currPage,
-                onChange: setCurrPage,
-              }}
-              onManageMetadata={showEditMetadataModal}
-            />
-            : <EmptyElement canAdd={embeddingAvailable} onClick={routeToDocCreate} type={isDataSourceNotion ? 'sync' : 'upload'} />
+            ? (
+              <List
+                embeddingAvailable={embeddingAvailable}
+                documents={documentsList || []}
+                datasetId={datasetId}
+                onUpdate={handleUpdate}
+                selectedIds={selectedIds}
+                onSelectedIdChange={setSelectedIds}
+                statusFilterValue={normalizedStatusFilterValue}
+                remoteSortValue={sortValue}
+                pagination={{
+                  total,
+                  limit,
+                  onLimitChange: handleLimitChange,
+                  current: currPage,
+                  onChange: handlePageChange,
+                }}
+                onManageMetadata={showEditMetadataModal}
+              />
+            )
+            : (
+              <EmptyElement
+                canAdd={embeddingAvailable}
+                onClick={routeToDocCreate}
+                type={isDataSourceNotion ? 'sync' : 'upload'}
+              />
+            )
         }
-        <NotionPageSelectorModal
-          isShow={notionPageSelectorModalVisible}
-          onClose={() => setNotionPageSelectorModalVisible(false)}
-          onSave={handleSaveNotionPageSelected}
-          datasetId={dataset?.id || ''}
-        />
       </div>
     </div>
   )

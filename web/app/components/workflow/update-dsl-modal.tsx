@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { useContext } from 'use-context-selector'
 import { useTranslation } from 'react-i18next'
+import { load as yamlLoad } from 'js-yaml'
 import {
   RiAlertFill,
   RiCloseLine,
@@ -16,8 +17,14 @@ import {
 } from '@remixicon/react'
 import { WORKFLOW_DATA_UPDATE } from './constants'
 import {
+  BlockEnum,
   SupportUploadFileTypes,
 } from './types'
+import type {
+  CommonNodeType,
+  Node,
+} from './types'
+import { AppModeEnum } from '@/types/app'
 import {
   initialEdges,
   initialNodes,
@@ -86,6 +93,8 @@ const UpdateDSLModal = ({
       graph,
       features,
       hash,
+      conversation_variables,
+      environment_variables,
     } = await fetchWorkflowDraft(`/apps/${app_id}/workflows/draft`)
 
     const { nodes, edges, viewport } = graph
@@ -122,9 +131,38 @@ const UpdateDSLModal = ({
         viewport,
         features: newFeatures,
         hash,
+        conversation_variables: conversation_variables || [],
+        environment_variables: environment_variables || [],
       },
     } as any)
   }, [eventEmitter])
+
+  const validateDSLContent = (content: string): boolean => {
+    try {
+      const data = yamlLoad(content) as any
+      const nodes = data?.workflow?.graph?.nodes ?? []
+      const invalidNodes = appDetail?.mode === AppModeEnum.ADVANCED_CHAT
+        ? [
+          BlockEnum.End,
+          BlockEnum.TriggerWebhook,
+          BlockEnum.TriggerSchedule,
+          BlockEnum.TriggerPlugin,
+        ]
+        : [BlockEnum.Answer]
+      const hasInvalidNode = nodes.some((node: Node<CommonNodeType>) => {
+        return invalidNodes.includes(node?.data?.type)
+      })
+      if (hasInvalidNode) {
+        notify({ type: 'error', message: t('workflow.common.importFailure') })
+        return false
+      }
+      return true
+    }
+    catch (err: any) {
+      notify({ type: 'error', message: t('workflow.common.importFailure') })
+      return false
+    }
+  }
 
   const isCreatingRef = useRef(false)
   const handleImport: MouseEventHandler = useCallback(async () => {
@@ -134,7 +172,7 @@ const UpdateDSLModal = ({
     if (!currentFile)
       return
     try {
-      if (appDetail && fileContent) {
+      if (appDetail && fileContent && validateDSLContent(fileContent)) {
         setLoading(true)
         const response = await importDSL({ mode: DSLImportMode.YAML_CONTENT, yaml_content: fileContent, app_id: appDetail.id })
         const { id, status, app_id, imported_dsl_version, current_dsl_version } = response

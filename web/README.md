@@ -7,6 +7,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 ### Run by source code
 
 Before starting the web frontend service, please make sure the following environment is ready.
+
 - [Node.js](https://nodejs.org) >= v22.11.x
 - [pnpm](https://pnpm.io) v10.x
 
@@ -31,6 +32,7 @@ NEXT_PUBLIC_EDITION=SELF_HOSTED
 # different from api or web app domain.
 # example: http://cloud.dify.ai/console/api
 NEXT_PUBLIC_API_PREFIX=http://localhost:5001/console/api
+NEXT_PUBLIC_COOKIE_DOMAIN=
 # The URL for Web APP, refers to the Web App base URL of WEB service if web app domain is different from
 # console or api domain.
 # example: http://udify.app/api
@@ -39,6 +41,11 @@ NEXT_PUBLIC_PUBLIC_API_PREFIX=http://localhost:5001/api
 # SENTRY
 NEXT_PUBLIC_SENTRY_DSN=
 ```
+
+> [!IMPORTANT]
+>
+> 1. When the frontend and backend run on different subdomains, set NEXT_PUBLIC_COOKIE_DOMAIN=1. The frontend and backend must be under the same top-level domain in order to share authentication cookies.
+> 1. It's necessary to set NEXT_PUBLIC_API_PREFIX and NEXT_PUBLIC_PUBLIC_API_PREFIX to the correct backend API URL.
 
 Finally, run the development server:
 
@@ -103,11 +110,9 @@ pnpm run test
 ```
 
 If you are not familiar with writing tests, here is some code to refer to:
-* [classnames.spec.ts](./utils/classnames.spec.ts)
-* [index.spec.tsx](./app/components/base/button/index.spec.tsx)
 
-
-
+- [classnames.spec.ts](./utils/classnames.spec.ts)
+- [index.spec.tsx](./app/components/base/button/index.spec.tsx)
 
 ## Documentation
 

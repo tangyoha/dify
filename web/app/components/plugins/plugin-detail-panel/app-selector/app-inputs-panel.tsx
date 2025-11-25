@@ -6,7 +6,7 @@ import AppInputsForm from '@/app/components/plugins/plugin-detail-panel/app-sele
 import { useAppDetail } from '@/service/use-apps'
 import { useAppWorkflow } from '@/service/use-workflow'
 import { useFileUploadConfig } from '@/service/use-common'
-import { Resolution } from '@/types/app'
+import { AppModeEnum, Resolution } from '@/types/app'
 import { FILE_EXTS } from '@/app/components/base/prompt-editor/constants'
 import type { App } from '@/types/app'
 import type { FileUpload } from '@/app/components/base/features/types'
@@ -30,7 +30,7 @@ const AppInputsPanel = ({
 }: Props) => {
   const { t } = useTranslation()
   const inputsRef = useRef<any>(value?.inputs || {})
-  const isBasicApp = appDetail.mode !== 'advanced-chat' && appDetail.mode !== 'workflow'
+  const isBasicApp = appDetail.mode !== AppModeEnum.ADVANCED_CHAT && appDetail.mode !== AppModeEnum.WORKFLOW
   const { data: fileUploadConfig } = useFileUploadConfig()
   const { data: currentApp, isFetching: isAppLoading } = useAppDetail(appDetail.id)
   const { data: currentWorkflow, isFetching: isWorkflowLoading } = useAppWorkflow(isBasicApp ? '' : appDetail.id)
@@ -62,7 +62,7 @@ const AppInputsPanel = ({
       return []
     let inputFormSchema = []
     if (isBasicApp) {
-      inputFormSchema = currentApp.model_config.user_input_form.filter((item: any) => !item.external_data_tool).map((item: any) => {
+      inputFormSchema = currentApp.model_config?.user_input_form?.filter((item: any) => !item.external_data_tool).map((item: any) => {
         if (item.paragraph) {
           return {
             ...item.paragraph,
@@ -74,6 +74,13 @@ const AppInputsPanel = ({
           return {
             ...item.number,
             type: 'number',
+            required: false,
+          }
+        }
+        if (item.checkbox) {
+          return {
+            ...item.checkbox,
+            type: 'checkbox',
             required: false,
           }
         }
@@ -103,15 +110,22 @@ const AppInputsPanel = ({
           }
         }
 
+        if (item.json_object) {
+          return {
+            ...item.json_object,
+            type: 'json_object',
+          }
+        }
+
         return {
           ...item['text-input'],
           type: 'text-input',
           required: false,
         }
-      })
+      }) || []
     }
     else {
-      const startNode = currentWorkflow?.graph.nodes.find(node => node.data.type === BlockEnum.Start) as any
+      const startNode = currentWorkflow?.graph?.nodes.find(node => node.data.type === BlockEnum.Start) as any
       inputFormSchema = startNode?.data.variables.map((variable: any) => {
         if (variable.type === InputVarType.multiFiles) {
           return {
@@ -132,9 +146,9 @@ const AppInputsPanel = ({
           ...variable,
           required: false,
         }
-      })
+      }) || []
     }
-    if ((currentApp.mode === 'completion' || currentApp.mode === 'workflow') && basicAppFileConfig.enabled) {
+    if ((currentApp.mode === AppModeEnum.COMPLETION || currentApp.mode === AppModeEnum.WORKFLOW) && basicAppFileConfig.enabled) {
       inputFormSchema.push({
         label: 'Image Upload',
         variable: '#image#',
@@ -144,7 +158,7 @@ const AppInputsPanel = ({
         fileUploadConfig,
       })
     }
-    return inputFormSchema
+    return inputFormSchema || []
   }, [basicAppFileConfig, currentApp, currentWorkflow, fileUploadConfig, isBasicApp])
 
   const handleFormChange = (value: Record<string, any>) => {
