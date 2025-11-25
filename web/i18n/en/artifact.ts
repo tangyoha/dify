@@ -23,4 +23,4 @@ export default {
   items: 'items',
   moreItems: '{{count}} more items',
   relatedKnowledge: 'Related Knowledge',
-} 
+}

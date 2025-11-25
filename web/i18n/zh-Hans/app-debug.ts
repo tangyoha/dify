@@ -348,6 +348,7 @@ const translation = {
     'text-input': '文本',
     'paragraph': '段落',
     'select': '下拉选项',
+    'radio': '单选按钮',
     'number': '数字',
     'single-file': '单文件',
     'multi-files': '文件列表',

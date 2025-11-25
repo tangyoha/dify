@@ -1,7 +1,7 @@
 'use client'
 import type { FC } from 'react'
 import React from 'react'
-import { RiAlignLeft, RiCheckboxMultipleLine, RiFileCopy2Line, RiFileList2Line, RiHashtag, RiTextSnippet } from '@remixicon/react'
+import { RiAlignLeft, RiCheckboxMultipleLine, RiFileCopy2Line, RiFileList2Line, RiHashtag, RiTextSnippet, RiRadioButtonLine } from '@remixicon/react'
 import { InputVarType } from '../../../types'
 
 type Props = {
@@ -14,6 +14,7 @@ const getIcon = (type: InputVarType) => {
     [InputVarType.textInput]: RiTextSnippet,
     [InputVarType.paragraph]: RiAlignLeft,
     [InputVarType.select]: RiCheckboxMultipleLine,
+    [InputVarType.radio]: RiRadioButtonLine,
     [InputVarType.number]: RiHashtag,
     [InputVarType.singleFile]: RiFileList2Line,
     [InputVarType.multiFiles]: RiFileCopy2Line,

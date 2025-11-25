@@ -7,7 +7,7 @@ import RemarkGfm from 'remark-gfm'
 import RehypeRaw from 'rehype-raw'
 import { flow } from 'lodash-es'
 import cn from '@/utils/classnames'
-import { customUrlTransform, preprocessLaTeX, preprocessThinkTag, preprocessKnowledgeTag } from './markdown-utils'
+import { customUrlTransform, preprocessKnowledgeTag, preprocessLaTeX, preprocessThinkTag } from './markdown-utils'
 import {
   AudioBlock,
   CodeBlock,

@@ -13,6 +13,7 @@ const translation = {
       messageCount: 'Message Count',
       userRate: 'User Rate',
       adminRate: 'Op. Rate',
+      feedbackDetails: 'Feedback Details',
       startTime: 'START TIME',
       status: 'STATUS',
       runtime: 'RUN TIME',
@@ -24,6 +25,7 @@ const translation = {
       previous: 'Prev',
       next: 'Next',
     },
+    viewDetails: 'View Details',
     empty: {
       noChat: 'No conversation yet',
       noOutput: 'No output',
@@ -54,6 +56,14 @@ const translation = {
     uploadImages: 'Uploaded Images',
     modelParams: 'Model parameters',
   },
+  feedbackDetails: {
+    title: 'Feedback Details',
+    totalCount: 'Total {{count}} feedback(s)',
+    problemBreakdown: 'Problem Breakdown',
+    recentFeedback: 'Recent Feedback',
+    fromUser: 'User',
+    fromAdmin: 'Admin',
+  },
   filter: {
     period: {
       today: 'Today',
@@ -65,7 +75,10 @@ const translation = {
       quarterToDate: 'Quarter to date',
       yearToDate: 'Year to date',
       allTime: 'All time',
+      custom: 'Custom range',
     },
+    startDate: 'Start date',
+    endDate: 'End date',
     annotation: {
       all: 'All',
       annotated: 'Annotated Improvements ({{count}} items)',

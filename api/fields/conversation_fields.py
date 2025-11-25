@@ -11,12 +11,39 @@ class MessageTextField(fields.Raw):
         return value[0]["text"] if value else ""
 
 
+class FeedbackContentField(fields.Raw):
+    def format(self, value):
+        """Parse feedback content to extract problem type and description"""
+        if not value:
+            return {"problem_type": None, "description": None, "raw_content": None}
+
+        content = str(value)
+        # Parse structured feedback content (format: "problem_type: description")
+        if ":" in content:
+            parts = content.split(":", 1)
+            problem_type = parts[0].strip()
+            description = parts[1].strip() if len(parts) > 1 else ""
+            return {
+                "problem_type": problem_type,
+                "description": description,
+                "raw_content": content
+            }
+        else:
+            # Fallback for unstructured content
+            return {
+                "problem_type": "other",
+                "description": content,
+                "raw_content": content
+            }
+
 feedback_fields = {
     "rating": fields.String,
     "content": fields.String,
+    "parsed_content": FeedbackContentField(attribute="content"),
     "from_source": fields.String,
     "from_end_user_id": fields.String,
     "from_account": fields.Nested(simple_account_fields, allow_null=True),
+    "created_at": TimestampField,
 }
 
 annotation_fields = {
@@ -114,6 +141,7 @@ conversation_fields = {
     "from_source": fields.String,
     "from_end_user_id": fields.String,
     "from_end_user_session_id": fields.String(),
+    "from_end_external_user_id": fields.String(),
     "from_account_id": fields.String,
     "from_account_name": fields.String,
     "read_at": TimestampField,
@@ -151,6 +179,10 @@ conversation_with_summary_fields = {
     "from_source": fields.String,
     "from_end_user_id": fields.String,
     "from_end_user_session_id": fields.String,
+    "from_end_external_user_id": fields.String,
+    "from_end_user_name": fields.String,
+    "from_end_user_external_id": fields.String,
+    "from_end_user_is_anonymous": fields.Boolean,
     "from_account_id": fields.String,
     "from_account_name": fields.String,
     "name": fields.String,

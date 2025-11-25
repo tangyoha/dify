@@ -166,6 +166,29 @@ const FormItem: FC<Props> = ({
         }
 
         {
+          type === InputVarType.radio && (
+            <div className="space-y-2">
+              {payload.options?.map((option: string) => (
+                <label
+                  key={option}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors hover:bg-state-base-hover"
+                >
+                  <input
+                    type="radio"
+                    name={payload.variable}
+                    value={option}
+                    checked={value === option}
+                    onChange={() => onChange(option)}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-600"
+                  />
+                  <span className="text-text-primary">{option}</span>
+                </label>
+              ))}
+            </div>
+          )
+        }
+
+        {
           type === InputVarType.json && (
             <CodeEditor
               value={value}

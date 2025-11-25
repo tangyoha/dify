@@ -6,6 +6,7 @@ from controllers.web import api
 from controllers.web.error import AppUnavailableError
 from controllers.web.wraps import WebApiResource
 from core.app.app_config.common.parameters_mapping import get_parameters_from_feature_dict
+from configs import dify_config
 from libs.passport import PassportService
 from models.model import App, AppMode
 from services.app_service import AppService
@@ -46,13 +47,33 @@ class AppMeta(WebApiResource):
 class AppAccessMode(Resource):
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("appId", type=str, required=True, location="args")
+        parser.add_argument("appId", type=str, required=False, location="args")
+        parser.add_argument("appCode", type=str, required=False, location="args")
         args = parser.parse_args()
 
-        app_id = args["appId"]
-        res = EnterpriseService.WebAppAuth.get_app_access_mode_by_id(app_id)
-
-        return {"accessMode": res.access_mode}
+        app_id = args.get("appId")
+        app_code = args.get("appCode")
+        
+        # Either appId or appCode must be provided
+        if not app_id and not app_code:
+            return {"error": "Either appId or appCode parameter is required"}, 400
+        
+        # If enterprise is not enabled, return default public access mode
+        if not dify_config.ENTERPRISE_ENABLED:
+            return {"accessMode": "public"}
+        
+        try:
+            # If appId is provided, use it directly
+            if app_id:
+                res = EnterpriseService.WebAppAuth.get_app_access_mode_by_id(app_id)
+            else:
+                # Use appCode to get access mode
+                res = EnterpriseService.WebAppAuth.get_app_access_mode_by_code(app_code)
+            
+            return {"accessMode": res.access_mode}
+        except Exception:
+            # If enterprise service fails, fallback to public access mode
+            return {"accessMode": "public"}
 
 
 class AppWebAuthPermission(Resource):

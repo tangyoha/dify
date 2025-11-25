@@ -102,8 +102,20 @@ class ChatApi(WebApiResource):
         parser.add_argument("conversation_id", type=uuid_value, location="json")
         parser.add_argument("parent_message_id", type=uuid_value, required=False, location="json")
         parser.add_argument("retriever_from", type=str, required=False, default="web_app", location="json")
+        parser.add_argument("user", type=str, required=False, location="json")
 
         args = parser.parse_args()
+
+        # 如果提供了用户标识，更新end_user的信息
+        if args.get("user"):
+            user_identifier = args["user"]
+            # 更新用户的external_user_id和name字段
+            if end_user.external_user_id != user_identifier:
+                end_user.external_user_id = user_identifier
+                end_user.name = user_identifier
+                end_user.is_anonymous = False
+                from extensions.ext_database import db
+                db.session.commit()
 
         streaming = args["response_mode"] == "streaming"
         args["auto_generate_name"] = False

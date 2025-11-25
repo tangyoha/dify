@@ -226,9 +226,9 @@ const ChatInputArea = ({
           <div className='flex items-center justify-between mt-2 px-1 py-1'>
             <div className='flex items-center gap-3'>
               {showVariableButtons && inputsForm && inputsForm.length > 0
-                && inputsForm.filter(form => !form.hide && form.show_on_input).map(form => (
+                && inputsForm.filter(form => !form.hide && form.show_on_input).map((form, index) => (
                   <VariableButton
-                    key={form.variable}
+                    key={`${form.variable}-${form.type}-${index}`}
                     variable={form}
                     value={inputs?.[form.variable]}
                     onChange={value => onVariableChange?.(form.variable, value)}

@@ -12,6 +12,7 @@ import type {
   CompletionConversationFullDetailResponse,
   CompletionConversationsRequest,
   CompletionConversationsResponse,
+  ConversationFeedbackSummaryResponse,
   ConversationListResponse,
   LogMessageAnnotationsRequest,
   LogMessageAnnotationsResponse,
@@ -57,6 +58,10 @@ export const updateLogMessageFeedbacks: Fetcher<LogMessageFeedbacksResponse, { u
 
 export const updateLogMessageAnnotations: Fetcher<LogMessageAnnotationsResponse, { url: string; body: LogMessageAnnotationsRequest }> = ({ url, body }) => {
   return post<LogMessageAnnotationsResponse>(url, { body })
+}
+
+export const fetchConversationFeedbackSummary: Fetcher<ConversationFeedbackSummaryResponse, { url: string }> = ({ url }) => {
+  return get<ConversationFeedbackSummaryResponse>(url)
 }
 
 export const fetchAnnotationsCount: Fetcher<AnnotationsCountResponse, { url: string }> = ({ url }) => {

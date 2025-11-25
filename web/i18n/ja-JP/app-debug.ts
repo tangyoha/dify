@@ -346,6 +346,7 @@ const translation = {
     'text-input': '短文',
     'paragraph': '段落',
     'select': '選択',
+    'radio': 'ラジオボタン',
     'number': '数値',
     'single-file': '単一ファイル',
     'multi-files': 'ファイルリスト',

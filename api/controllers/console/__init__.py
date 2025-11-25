@@ -61,6 +61,7 @@ from .app import (
     ops_trace,
     site,
     statistic,
+    user_analytics_simple,
     workflow,
     workflow_app_log,
     workflow_run,

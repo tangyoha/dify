@@ -72,6 +72,28 @@ const AppInputsForm = ({
         />
       )
     }
+    if (form.type === InputVarType.radio) {
+      return (
+        <div className="space-y-2">
+          {options?.map((option: string) => (
+            <label
+              key={option}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors hover:bg-state-base-hover"
+            >
+              <input
+                type="radio"
+                name={variable}
+                value={option}
+                checked={inputs[variable] === option}
+                onChange={() => handleFormChange(variable, option)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-600"
+              />
+              <span className="text-text-primary">{option}</span>
+            </label>
+          ))}
+        </div>
+      )
+    }
     if (form.type === InputVarType.singleFile) {
       return (
         <FileUploaderInAttachmentWrapper

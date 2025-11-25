@@ -47,6 +47,7 @@ class BasicVariablesConfigManager:
                 VariableEntityType.PARAGRAPH,
                 VariableEntityType.NUMBER,
                 VariableEntityType.SELECT,
+                VariableEntityType.RADIO,
             }:
                 variable = variables[variable_type]
                 variable_entities.append(

@@ -26,7 +26,7 @@ import Loading from '@/app/components/base/loading'
 import Drawer from '@/app/components/base/drawer'
 import Chat from '@/app/components/base/chat/chat'
 import { ToastContext } from '@/app/components/base/toast'
-import { fetchChatConversationDetail, fetchChatMessages, fetchCompletionConversationDetail, updateLogMessageAnnotations, updateLogMessageFeedbacks } from '@/service/log'
+import { fetchChatConversationDetail, fetchChatMessages, fetchCompletionConversationDetail, fetchConversationFeedbackSummary, updateLogMessageAnnotations, updateLogMessageFeedbacks } from '@/service/log'
 import ModelInfo from '@/app/components/app/log/model-info'
 import useBreakpoints, { MediaType } from '@/hooks/use-breakpoints'
 import TextGeneration from '@/app/components/app/text-generate/item'
@@ -77,6 +77,187 @@ const HandThumbIconWithCount: FC<{ count: number; iconType: 'up' | 'down' }> = (
     <Icon className={'mr-0.5 h-3 w-3 rounded-md'} />
     {count > 0 ? count : null}
   </div>
+}
+
+const FeedbackDetailsCell: FC<{ conversationId: string; appId: string }> = ({ conversationId, appId }) => {
+  const { t } = useTranslation()
+  const [showDetails, setShowDetails] = useState(false)
+  const { data: feedbackSummary } = useSWR(
+    showDetails ? `/apps/${appId}/conversations/${conversationId}/feedback-summary` : null,
+    (url) => fetchConversationFeedbackSummary({ url })
+  )
+
+  const handleToggleDetails = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDetails(!showDetails)
+  }, [showDetails])
+
+  const renderProblemType = (problemType: string) => {
+    const typeMap: Record<string, string> = {
+      inaccurate: t('common.chat.feedback.dislikeModal.reasons.inaccurate'),
+      slow: t('common.chat.feedback.dislikeModal.reasons.slow'),
+      irrelevant: t('common.chat.feedback.dislikeModal.reasons.irrelevant'),
+      incomplete: t('common.chat.feedback.dislikeModal.reasons.incomplete'),
+      other: t('common.chat.feedback.dislikeModal.reasons.other'),
+    }
+    return typeMap[problemType] || problemType
+  }
+
+  if (!feedbackSummary?.data || feedbackSummary.data.total_count === 0) {
+    return <span className="text-text-tertiary text-xs">-</span>
+  }
+
+  const { data } = feedbackSummary
+  const hasNegativeFeedback = data.user_feedbacks.some(f => f.rating === 'dislike') ||
+                              data.admin_feedbacks.some(f => f.rating === 'dislike')
+
+  return (
+    <div className="relative">
+      <button
+        onClick={handleToggleDetails}
+        className="text-xs text-primary-600 hover:text-primary-700 cursor-pointer"
+      >
+        {t('appLog.table.viewDetails')} ({data.total_count})
+      </button>
+
+      {showDetails && (
+        <div className="absolute top-6 left-0 z-50 w-80 bg-components-panel-bg border border-components-panel-border rounded-lg shadow-lg p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="system-sm-semibold text-text-primary">{t('appLog.feedbackDetails.title')}</h4>
+            <button onClick={handleToggleDetails} className="text-text-tertiary hover:text-text-secondary">
+              <RiCloseLine className="w-4 h-4" />
+            </button>
+          </div>
+
+          {hasNegativeFeedback && (
+            <div className="mb-3">
+              <h5 className="system-xs-semibold text-text-secondary mb-2">{t('appLog.feedbackDetails.problemBreakdown')}</h5>
+              <div className="space-y-1">
+                {Object.entries(data.problem_breakdown).map(([type, count]) => (
+                  count > 0 && (
+                    <div key={type} className="flex justify-between items-center p-2 bg-background-default rounded-md">
+                      <span className="system-xs-regular text-text-secondary">{renderProblemType(type)}</span>
+                      <span className="system-xs-medium text-text-primary">{count}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {[...data.user_feedbacks, ...data.admin_feedbacks]
+              .sort((a, b) => b.created_at - a.created_at)
+              .slice(0, 5)
+              .map((feedback) => (
+                <div key={feedback.id} className="p-2 bg-background-default rounded-md border border-divider-subtle">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full system-2xs-medium ${
+                      feedback.rating === 'like'
+                        ? 'bg-util-colors-green-green-50 text-util-colors-green-green-700 border border-util-colors-green-green-200'
+                        : 'bg-util-colors-red-red-50 text-util-colors-red-red-700 border border-util-colors-red-red-200'
+                    }`}>
+                      {feedback.rating === 'like' ? '👍' : '👎'} {feedback.from_source}
+                    </span>
+                    <span className="system-2xs-regular text-text-tertiary">{dayjs(feedback.created_at * 1000).format('MM/DD HH:mm')}</span>
+                  </div>
+                  {feedback.content && (
+                    <p className="system-xs-regular text-text-secondary break-words">{feedback.content}</p>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const FeedbackDetailsPanel: FC<{ conversationId: string; appId: string }> = ({ conversationId, appId }) => {
+  const { t } = useTranslation()
+  const { data: feedbackSummary } = useSWR(
+    conversationId && appId ? `/apps/${appId}/conversations/${conversationId}/feedback-summary` : null,
+    (url) => fetchConversationFeedbackSummary({ url })
+  )
+
+  const renderProblemType = (problemType: string) => {
+    const typeMap: Record<string, string> = {
+      inaccurate: t('common.chat.feedback.dislikeModal.reasons.inaccurate'),
+      slow: t('common.chat.feedback.dislikeModal.reasons.slow'),
+      irrelevant: t('common.chat.feedback.dislikeModal.reasons.irrelevant'),
+      incomplete: t('common.chat.feedback.dislikeModal.reasons.incomplete'),
+      other: t('common.chat.feedback.dislikeModal.reasons.other'),
+    }
+    return typeMap[problemType] || problemType
+  }
+
+  if (!feedbackSummary?.data || feedbackSummary.data.total_count === 0) {
+    return null
+  }
+
+  const { data } = feedbackSummary
+  const hasNegativeFeedback = data.user_feedbacks.some(f => f.rating === 'dislike') ||
+                              data.admin_feedbacks.some(f => f.rating === 'dislike')
+
+  return (
+    <div className='bg-background-section-burn rounded-xl p-4 mb-1'>
+      <div className='flex items-center justify-between mb-3'>
+        <h3 className='system-sm-semibold text-text-primary'>{t('appLog.feedbackDetails.title')}</h3>
+        <span className='system-xs-regular text-text-tertiary'>
+          {t('appLog.feedbackDetails.totalCount', { count: data.total_count })}
+        </span>
+      </div>
+
+      {hasNegativeFeedback && (
+        <div className='mb-4'>
+          <h4 className='system-xs-semibold text-text-secondary mb-2'>{t('appLog.feedbackDetails.problemBreakdown')}</h4>
+          <div className='grid grid-cols-2 gap-2'>
+            {Object.entries(data.problem_breakdown).map(([type, count]) => (
+              count > 0 && (
+                <div key={type} className='flex justify-between items-center p-2 bg-background-default rounded-lg'>
+                  <span className='system-xs-regular text-text-secondary'>{renderProblemType(type)}</span>
+                  <span className='system-xs-medium text-text-primary'>{count}</span>
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className='space-y-3'>
+        <h4 className='system-xs-semibold text-text-secondary'>{t('appLog.feedbackDetails.recentFeedback')}</h4>
+        <div className='space-y-2 max-h-48 overflow-y-auto'>
+          {[...data.user_feedbacks, ...data.admin_feedbacks]
+            .sort((a, b) => b.created_at - a.created_at)
+            .slice(0, 10)
+            .map((feedback) => (
+              <div key={feedback.id} className='p-3 bg-background-default rounded-lg border border-divider-subtle'>
+                <div className='flex items-center justify-between mb-2'>
+                  <div className='flex items-center space-x-2'>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      feedback.rating === 'like'
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
+                      {feedback.rating === 'like' ? '👍' : '👎'} {feedback.rating}
+                    </span>
+                    <span className='system-xs-regular text-text-tertiary'>
+                      {feedback.from_source === 'user' ? t('appLog.feedbackDetails.fromUser') : t('appLog.feedbackDetails.fromAdmin')}
+                    </span>
+                  </div>
+                  <span className='system-xs-regular text-text-tertiary'>
+                    {dayjs(feedback.created_at * 1000).format('MM/DD HH:mm')}
+                  </span>
+                </div>
+                {feedback.content && (
+                  <p className='system-xs-regular text-text-secondary break-words'>{feedback.content}</p>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const statusTdRender = (statusCount: StatusCount) => {
@@ -385,6 +566,10 @@ function DetailPanel({ detail, onFeedback }: IDetailPanel) {
           <RiCloseLine className='h-4 w-4 text-text-tertiary' />
         </ActionButton>
       </div>
+      {/* Feedback Details Section */}
+      <div className='shrink-0 px-1'>
+        <FeedbackDetailsPanel conversationId={detail.id} appId={appDetail?.id || ''} />
+      </div>
       {/* Panel Body */}
       <div className='shrink-0 px-1 pt-1'>
         <div className='rounded-t-xl bg-background-section-burn p-3 pb-2'>
@@ -671,13 +856,14 @@ const ConversationList: FC<IConversationList> = ({ logs, appDetail, onRefresh })
             <td className='whitespace-nowrap bg-background-section-burn py-1.5 pl-3'>{isChatMode ? t('appLog.table.header.messageCount') : t('appLog.table.header.output')}</td>
             <td className='whitespace-nowrap bg-background-section-burn py-1.5 pl-3'>{t('appLog.table.header.userRate')}</td>
             <td className='whitespace-nowrap bg-background-section-burn py-1.5 pl-3'>{t('appLog.table.header.adminRate')}</td>
+            <td className='whitespace-nowrap bg-background-section-burn py-1.5 pl-3'>{t('appLog.table.header.feedbackDetails')}</td>
             <td className='whitespace-nowrap bg-background-section-burn py-1.5 pl-3'>{t('appLog.table.header.updatedTime')}</td>
             <td className='whitespace-nowrap rounded-r-lg bg-background-section-burn py-1.5 pl-3'>{t('appLog.table.header.time')}</td>
           </tr>
         </thead>
         <tbody className="system-sm-regular text-text-secondary">
           {logs.data.map((log: any) => {
-            const endUser = log.from_end_user_session_id || log.from_account_name
+            const endUser = log.from_end_external_user_id || log.from_end_user_session_id
             const leftValue = get(log, isChatMode ? 'name' : 'message.inputs.query') || (!isChatMode ? (get(log, 'message.query') || get(log, 'message.inputs.default_input')) : '') || ''
             const rightValue = get(log, isChatMode ? 'message_count' : 'message.answer')
             return <tr
@@ -721,6 +907,9 @@ const ConversationList: FC<IConversationList> = ({ logs, appDetail, onRefresh })
                     {!!log.admin_feedback_stats.dislike && <HandThumbIconWithCount iconType='down' count={log.admin_feedback_stats.dislike} />}
                   </>
                 }
+              </td>
+              <td className='p-3 pr-2'>
+                <FeedbackDetailsCell conversationId={log.id} appId={appDetail.id} />
               </td>
               <td className='w-[160px] p-3 pr-2'>{formatTime(log.updated_at, t('appLog.dateTimeFormat') as string)}</td>
               <td className='w-[160px] p-3 pr-2'>{formatTime(log.created_at, t('appLog.dateTimeFormat') as string)}</td>

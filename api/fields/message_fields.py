@@ -5,7 +5,10 @@ from libs.helper import TimestampField
 
 from .raws import FilesContainedField
 
-feedback_fields = {"rating": fields.String}
+feedback_fields = {
+    "rating": fields.String,
+    "content": fields.String,
+}
 
 agent_thought_fields = {
     "id": fields.String,
@@ -48,6 +51,8 @@ message_fields = {
     "query": fields.String,
     "answer": fields.String(attribute="re_sign_file_url_answer"),
     "feedback": fields.Nested(feedback_fields, attribute="user_feedback", allow_null=True),
+    "admin_feedback": fields.Nested(feedback_fields, attribute="admin_feedback", allow_null=True),
+    "feedbacks": fields.List(fields.Nested(feedback_fields), attribute="feedbacks"),
     "retriever_resources": fields.List(fields.Nested(retriever_resource_fields)),
     "created_at": TimestampField,
     "agent_thoughts": fields.List(fields.Nested(agent_thought_fields)),

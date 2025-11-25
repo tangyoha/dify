@@ -50,6 +50,8 @@ const ChatWrapper = () => {
     setClearChatList,
     setIsResponding,
     allInputsHidden,
+    setCurrentConversationInputs,
+    handleNewConversationInputsChange,
   } = useEmbeddedChatbotContext()
   const appConfig = useMemo(() => {
     const config = appParams || {}
@@ -127,12 +129,20 @@ const ChatWrapper = () => {
   }, [respondingState, setIsResponding])
 
   const doSend: OnSend = useCallback((message, files, isRegenerate = false, parentAnswer: ChatItem | null = null) => {
+    // 获取用户设置的用户标识
+    const userIdentifier = localStorage.getItem('chat_user_id') || ''
+
     const data: any = {
       query: message,
       files,
       inputs: currentConversationId ? currentConversationInputs : newConversationInputs,
       conversation_id: currentConversationId,
       parent_message_id: (isRegenerate ? parentAnswer?.id : getLastAnswer(chatList)?.id) || null,
+    }
+
+    // 如果用户设置了用户标识，添加到请求数据中
+    if (userIdentifier) {
+      data.user = userIdentifier
     }
 
     handleSend(
@@ -145,6 +155,31 @@ const ChatWrapper = () => {
       },
     )
   }, [currentConversationId, currentConversationInputs, newConversationInputs, chatList, handleSend, isInstalledApp, appId, handleNewConversationCompleted])
+
+  const handleVariableChange = useCallback((variable: string, value: any) => {
+    if (currentConversationId) {
+      // 更新当前对话的输入值
+      const newInputs = {
+        ...currentConversationInputs,
+        [variable]: value,
+      }
+      // 在对话进行中更新输入值，这些值会在下次发送消息时使用
+      setCurrentConversationInputs(newInputs)
+
+      // 同时更新新对话的输入值，保持同步
+      handleNewConversationInputsChange({
+        ...newConversationInputsRef.current,
+        [variable]: value,
+      })
+    }
+    else {
+      // For new conversations, use the context method to update inputs
+      handleNewConversationInputsChange({
+        ...newConversationInputsRef.current,
+        [variable]: value,
+      })
+    }
+  }, [currentConversationId, currentConversationInputs, setCurrentConversationInputs, handleNewConversationInputsChange, newConversationInputsRef])
 
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
@@ -168,9 +203,8 @@ const ChatWrapper = () => {
     if (allInputsHidden || !inputsForms.length)
       return null
     if (isMobile) {
-      if (!currentConversationId)
-        return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-      return <div className='mb-4'></div>
+      // 在移动端，始终显示表单，但在有对话时保持折叠状态
+      return <InputsForm collapsed={currentConversationId ? true : collapsed} setCollapsed={setCollapsed} />
     }
     else {
       return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
@@ -248,6 +282,9 @@ const ChatWrapper = () => {
       inputsForm={inputsForms}
       onRegenerate={doRegenerate}
       onStopResponding={handleStop}
+      showVariableButtons={true}
+      onVariableChange={handleVariableChange}
+      appParams={appData}
       chatNode={
         <>
           {chatNode}

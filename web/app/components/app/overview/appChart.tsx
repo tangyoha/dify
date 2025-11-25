@@ -12,7 +12,7 @@ import { formatNumber } from '@/utils/format'
 import Basic from '@/app/components/app-sidebar/basic'
 import Loading from '@/app/components/base/loading'
 import type { AppDailyConversationsResponse, AppDailyEndUsersResponse, AppDailyMessagesResponse, AppTokenCostsResponse } from '@/models/app'
-import { getAppDailyConversations, getAppDailyEndUsers, getAppDailyMessages, getAppStatistics, getAppTokenCosts, getWorkflowDailyConversations } from '@/service/apps'
+import { getAppDailyConversations, getAppDailyEndUsers, getAppDailyMessages, getAppStatistics, getAppTokenCosts, getWorkflowDailyConversations, getAppDailyFeedback } from '@/service/apps'
 const valueFormatter = (v: string | number) => v
 
 const COLOR_TYPE_MAP = {
@@ -28,6 +28,14 @@ const COLOR_TYPE_MAP = {
     lineColor: 'rgba(28, 100, 242, 1)',
     bgColor: ['rgba(28, 100, 242, 0.3)', 'rgba(28, 100, 242, 0.1)'],
   },
+  likeGreen: {
+    lineColor: 'rgba(16, 185, 129, 1)',
+    bgColor: ['rgba(16, 185, 129, 0.2)', 'rgba(16, 185, 129, 0.08)'],
+  },
+  dislikeYellow: {
+    lineColor: 'rgba(245, 158, 11, 1)',
+    bgColor: ['rgba(245, 158, 11, 0.2)', 'rgba(245, 158, 11, 0.08)'],
+  },
 }
 
 const COMMON_COLOR_MAP = {
@@ -36,8 +44,8 @@ const COMMON_COLOR_MAP = {
   splitLineDark: '#E5E7EB',
 }
 
-type IColorType = 'green' | 'orange' | 'blue'
-type IChartType = 'messages' | 'conversations' | 'endUsers' | 'costs' | 'workflowCosts'
+type IColorType = 'green' | 'orange' | 'blue' | 'likeGreen' | 'dislikeYellow'
+type IChartType = 'messages' | 'conversations' | 'endUsers' | 'costs' | 'workflowCosts' | 'userLike' | 'userDislike'
 type IChartConfigType = { colorType: IColorType; showTokens?: boolean }
 
 const commonDateFormat = 'MMM D, YYYY'
@@ -58,6 +66,12 @@ const CHART_TYPE_CONFIG: Record<string, IChartConfigType> = {
   },
   workflowCosts: {
     colorType: 'blue',
+  },
+  userLike: {
+    colorType: 'likeGreen',
+  },
+  userDislike: {
+    colorType: 'dislikeYellow',
   },
 }
 
@@ -444,6 +458,64 @@ export const AvgUserInteractions: FC<IBizChartProps> = ({ id, period }) => {
     valueKey='interactions'
     isAvg
     {...(noDataFlag && { yMax: 500 })}
+  />
+}
+
+export const ResponseTimeTrend: FC<IBizChartProps> = ({ id, period }) => {
+  const { t } = useTranslation()
+  const { data: response } = useSWR({ url: `/apps/${id}/statistics/response-time-trend`, params: period.query }, getAppStatistics)
+  if (!response)
+    return <Loading />
+  const noDataFlag = !response.data || response.data.length === 0
+  return <Chart
+    basicInfo={{ title: t('appOverview.analysis.responseTimeTrend.title'), explanation: t('appOverview.analysis.responseTimeTrend.explanation'), timePeriod: period.name }}
+    chartData={!noDataFlag ? response : { data: getDefaultChartData({ ...(period.query ?? defaultPeriod), key: 'response_time' }) } as any}
+    valueKey='response_time'
+    chartType='conversations'
+    isAvg
+    unit='s'
+    {...(noDataFlag && { yMax: 10 })}
+    className="min-w-0"
+  />
+}
+
+// 用户点赞趋势图
+export const UserLikeTrend: FC<IBizChartProps> = ({ id, period }) => {
+  const { t } = useTranslation()
+  const { data: response } = useSWR({ url: `/apps/${id}/statistics/daily-feedback`, params: period.query }, getAppDailyFeedback)
+  if (!response)
+    return <Loading />
+  const noDataFlag = !response.data || response.data.length === 0
+  return <Chart
+    basicInfo={{
+      title: t('appOverview.analysis.userFeedbackTrend.likeTitle'),
+      explanation: t('appOverview.analysis.userFeedbackTrend.likeExplanation'),
+      timePeriod: period.name,
+    }}
+    chartData={!noDataFlag ? response : { data: getDefaultChartData({ ...(period.query ?? defaultPeriod), key: 'like_count' }) } as any}
+    valueKey='like_count'
+    chartType='userLike'
+    {...(noDataFlag && { yMax: 10 })}
+  />
+}
+
+// 用户点踩趋势图
+export const UserDislikeTrend: FC<IBizChartProps> = ({ id, period }) => {
+  const { t } = useTranslation()
+  const { data: response } = useSWR({ url: `/apps/${id}/statistics/daily-feedback`, params: period.query }, getAppDailyFeedback)
+  if (!response)
+    return <Loading />
+  const noDataFlag = !response.data || response.data.length === 0
+  return <Chart
+    basicInfo={{
+      title: t('appOverview.analysis.userFeedbackTrend.dislikeTitle'),
+      explanation: t('appOverview.analysis.userFeedbackTrend.dislikeExplanation'),
+      timePeriod: period.name,
+    }}
+    chartData={!noDataFlag ? response : { data: getDefaultChartData({ ...(period.query ?? defaultPeriod), key: 'dislike_count' }) } as any}
+    valueKey='dislike_count'
+    chartType='userDislike'
+    {...(noDataFlag && { yMax: 10 })}
   />
 }
 

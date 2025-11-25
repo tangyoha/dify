@@ -65,6 +65,7 @@ export const preprocessKnowledgeTag = (content: string) => {
       },
     ),
   ])(content)
+}
 /**
  * Transforms a URI for use in react-markdown, ensuring security and compatibility.
  * This function is designed to work with react-markdown v9+ which has stricter

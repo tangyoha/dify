@@ -99,8 +99,14 @@ export type MessageContent = {
   feedbacks: Array<{
     rating: 'like' | 'dislike' | null
     content: string | null
+    parsed_content?: {
+      problem_type: string | null
+      description: string | null
+      raw_content: string | null
+    }
     from_source?: 'admin' | 'user'
     from_end_user_id?: string
+    created_at?: number
   }>
   message_files: VisionFile[]
   metadata: Metadata
@@ -227,6 +233,32 @@ export type LogMessageAnnotationsResponse = LogMessageFeedbacksResponse
 
 export type AnnotationsCountResponse = {
   count: number
+}
+
+export type FeedbackDetail = {
+  id: string
+  rating: 'like' | 'dislike' | null
+  content: string | null
+  created_at: number
+  from_source: 'admin' | 'user'
+}
+
+export type FeedbackSummary = {
+  total_count: number
+  user_feedbacks: FeedbackDetail[]
+  admin_feedbacks: FeedbackDetail[]
+  problem_breakdown: {
+    inaccurate: number
+    slow: number
+    irrelevant: number
+    incomplete: number
+    other: number
+  }
+}
+
+export type ConversationFeedbackSummaryResponse = {
+  result: 'success' | 'error'
+  data: FeedbackSummary
 }
 
 export type WorkflowRunDetail = {

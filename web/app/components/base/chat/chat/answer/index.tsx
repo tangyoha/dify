@@ -14,6 +14,7 @@ import BasicContent from './basic-content'
 import SuggestedQuestions from './suggested-questions'
 import More from './more'
 import WorkflowProcessItem from './workflow-process'
+import FeedbackHistory from './feedback-history'
 import LoadingAnim from '@/app/components/base/chat/chat/loading-anim'
 import Citation from '@/app/components/base/chat/chat/citation'
 import { EditTitle } from '@/app/components/app/annotation/edit-annotation-modal/edit-item'
@@ -215,6 +216,7 @@ const Answer: FC<AnswerProps> = ({
                 <Citation data={citation} showHitInfo={config?.supportCitationHitInfo} />
               )
             }
+            <FeedbackHistory item={item} />
             {
               item.siblingCount && item.siblingCount > 1 && item.siblingIndex !== undefined && (
                 <ContentSwitch

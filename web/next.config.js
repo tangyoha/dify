@@ -14,7 +14,7 @@ const withMDX = require('@next/mdx')({
 })
 
 /** @type {import('webpack').Configuration} */
-const webpack = require('webpack');
+const webpack = require('webpack')
 // the default url to prevent parse url error when running jest
 const hasSetWebPrefix = process.env.NEXT_PUBLIC_WEB_PREFIX
 const port = process.env.PORT || 3000

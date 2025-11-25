@@ -20,6 +20,23 @@ class PassportResource(Resource):
         system_features = FeatureService.get_system_features()
         app_code = request.headers.get("X-App-Code")
         user_id = request.args.get("user_id")
+        # 支持前端传递的sys.user_id参数（Base64编码）
+        sys_user_id = request.args.get("sys.user_id")
+
+        # 如果有sys.user_id，尝试解码并使用
+        if sys_user_id and not user_id:
+            try:
+                import base64
+                import urllib.parse
+                # 首先尝试Base64解码
+                user_id = base64.b64decode(sys_user_id).decode('utf-8')
+            except Exception:
+                try:
+                    # 如果Base64解码失败，尝试URL解码
+                    user_id = urllib.parse.unquote(sys_user_id)
+                except Exception:
+                    # 如果都失败，直接使用原始值
+                    user_id = sys_user_id
 
         if app_code is None:
             raise Unauthorized("X-App-Code header is missing.")
@@ -39,19 +56,44 @@ class PassportResource(Resource):
             raise NotFound()
 
         if user_id:
+            # 首先尝试通过external_user_id查找用户
             end_user = (
-                db.session.query(EndUser).filter(EndUser.app_id == app_model.id, EndUser.session_id == user_id).first()
+                db.session.query(EndUser)
+                .filter(
+                    EndUser.app_id == app_model.id,
+                    EndUser.external_user_id == user_id
+                )
+                .first()
             )
 
+            # 如果没找到，尝试通过session_id查找（向后兼容）
+            if not end_user:
+                end_user = (
+                    db.session.query(EndUser)
+                    .filter(
+                        EndUser.app_id == app_model.id,
+                        EndUser.session_id == user_id
+                    )
+                    .first()
+                )
+
             if end_user:
-                pass
+                # 如果用户存在但external_user_id为空，更新它
+                if not end_user.external_user_id:
+                    end_user.external_user_id = user_id
+                    end_user.name = user_id  # 将用户ID作为默认名称
+                    end_user.is_anonymous = False
+                    db.session.commit()
             else:
+                # 创建新用户，使用external_user_id
                 end_user = EndUser(
                     tenant_id=app_model.tenant_id,
                     app_id=app_model.id,
                     type="browser",
-                    is_anonymous=True,
-                    session_id=user_id,
+                    external_user_id=user_id,
+                    name=user_id,  # 将用户ID作为默认名称
+                    is_anonymous=False,
+                    session_id=generate_session_id(),
                 )
                 db.session.add(end_user)
                 db.session.commit()

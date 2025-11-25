@@ -79,7 +79,8 @@ export const ThinkBlock = ({ children, ...props }: any) => {
       }
       const items = JSON.parse(content)
       return <KnowledgeBlock items={items} />
-    } catch (error) {
+    }
+ catch (error) {
       console.error('Failed to parse knowledge items:', error)
       return null
     }

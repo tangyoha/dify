@@ -203,6 +203,15 @@ export const useEmbeddedChatbot = () => {
         }
       }
 
+      if (item.radio) {
+        const isInputInOptions = item.radio.options.includes(initInputs[item.radio.variable])
+        return {
+          ...item.radio,
+          default: (isInputInOptions ? initInputs[item.radio.variable] : undefined) || item.default,
+          type: 'radio',
+        }
+      }
+
       if (item['file-list']) {
         return {
           ...item['file-list'],
@@ -241,13 +250,19 @@ export const useEmbeddedChatbot = () => {
     })()
   }, [])
   useEffect(() => {
-    const conversationInputs: Record<string, any> = {}
+    const currentInputs = newConversationInputsRef.current || {}
+    const conversationInputs: Record<string, any> = { ...currentInputs }
 
+    // 只为新字段设置默认值，保留现有字段的值
     inputsForms.forEach((item: any) => {
-      conversationInputs[item.variable] = item.default || null
+      if (!(item.variable in conversationInputs)) 
+        conversationInputs[item.variable] = item.default || null
     })
-    handleNewConversationInputsChange(conversationInputs)
-  }, [handleNewConversationInputsChange, inputsForms])
+
+    // 只有当有新字段时才更新
+    if (Object.keys(conversationInputs).length !== Object.keys(currentInputs).length) 
+      handleNewConversationInputsChange(conversationInputs)
+  }, [handleNewConversationInputsChange, inputsForms, newConversationInputsRef])
 
   const { data: newConversation } = useSWR(newConversationId ? [isInstalledApp, appId, newConversationId] : null, () => generationConversationName(isInstalledApp, appId, newConversationId), { revalidateOnFocus: false })
   const [originConversationList, setOriginConversationList] = useState<ConversationItem[]>([])
@@ -373,7 +388,11 @@ export const useEmbeddedChatbot = () => {
   }, [mutateAppConversationData, handleConversationIdInfoChange])
 
   const handleFeedback = useCallback(async (messageId: string, feedback: Feedback) => {
-    await updateFeedback({ url: `/messages/${messageId}/feedbacks`, body: { rating: feedback.rating } }, isInstalledApp, appId)
+    const body: any = { rating: feedback.rating }
+    if (feedback.content) {
+      body.content = feedback.content
+    }
+    await updateFeedback({ url: `/messages/${messageId}/feedbacks`, body }, isInstalledApp, appId)
     notify({ type: 'success', message: t('common.api.success') })
   }, [isInstalledApp, appId, t, notify])
 

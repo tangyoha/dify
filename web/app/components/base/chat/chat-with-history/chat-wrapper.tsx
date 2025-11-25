@@ -54,6 +54,7 @@ const ChatWrapper = () => {
     setClearChatList,
     setIsResponding,
     allInputsHidden,
+    setCurrentConversationInputs,
   } = useChatWithHistoryContext()
 
   const { isOpen: isKnowledgeOpen, items: knowledgeItems, closeSidebar } = useKnowledge()
@@ -142,12 +143,29 @@ const ChatWrapper = () => {
   }, [respondingState, setIsResponding])
 
   const doSend: OnSend = useCallback((message, files, isRegenerate = false, parentAnswer: ChatItem | null = null) => {
+    const inputs = currentConversationId ? currentConversationInputs : newConversationInputs
+
+    // 获取用户设置的用户标识
+    const userIdentifier = localStorage.getItem('chat_user_id') || ''
+
+    console.log('🚀 Sending message with inputs:', {
+      currentConversationId,
+      inputs,
+      message: `${message.substring(0, 50)}...`,
+      user: userIdentifier,
+    })
+
     const data: any = {
       query: message,
       files,
-      inputs: currentConversationId ? currentConversationInputs : newConversationInputs,
+      inputs,
       conversation_id: currentConversationId,
       parent_message_id: (isRegenerate ? parentAnswer?.id : getLastAnswer(chatList)?.id) || null,
+    }
+
+    // 如果用户设置了用户标识，添加到请求数据中
+    if (userIdentifier) {
+      data.user = userIdentifier
     }
 
     handleSend(
@@ -162,16 +180,31 @@ const ChatWrapper = () => {
   }, [chatList, handleNewConversationCompleted, handleSend, currentConversationId, currentConversationInputs, newConversationInputs, isInstalledApp, appId])
 
   const handleVariableChange = useCallback((variable: string, value: any) => {
+    console.log('🔧 Variable changed:', { variable, value, currentConversationId })
     if (currentConversationId) {
-      // For existing conversations, we would need to update context state
-      // This might need to be implemented at the context level
-      console.log('Variable change in existing conversation:', variable, value)
+      // 更新当前对话的输入值
+      const newInputs = {
+        ...currentConversationInputs,
+        [variable]: value,
+      }
+      console.log('📝 Updating currentConversationInputs:', newInputs)
+      // 在对话进行中更新输入值，这些值会在下次发送消息时使用
+      setCurrentConversationInputs(newInputs)
+
+      // 同时更新新对话的输入值，保持同步
+      handleNewConversationInputsChange({
+        ...newConversationInputsRef.current,
+        [variable]: value,
+      })
     }
     else {
       // For new conversations, use the context method to update inputs
-      handleNewConversationInputsChange({ [variable]: value })
+      handleNewConversationInputsChange({
+        ...newConversationInputsRef.current,
+        [variable]: value,
+      })
     }
-  }, [currentConversationId, handleNewConversationInputsChange])
+  }, [currentConversationId, currentConversationInputs, setCurrentConversationInputs, handleNewConversationInputsChange, newConversationInputsRef])
 
   const doRegenerate = useCallback((chatItem: ChatItemInTree, editedQuestion?: { message: string, files?: FileEntity[] }) => {
     const question = editedQuestion ? chatItem : chatList.find(item => item.id === chatItem.parentMessageId)!
@@ -195,9 +228,8 @@ const ChatWrapper = () => {
     if (allInputsHidden || !inputsForms.length)
       return null
     if (isMobile) {
-      if (!currentConversationId)
-        return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
-      return null
+      // 在移动端，始终显示表单，但在有对话时保持折叠状态
+      return <InputsForm collapsed={currentConversationId ? true : collapsed} setCollapsed={setCollapsed} />
     }
     else {
       return <InputsForm collapsed={collapsed} setCollapsed={setCollapsed} />
@@ -268,7 +300,7 @@ const ChatWrapper = () => {
     if (knowledgeItems?.length) {
       const knowledgeArtifacts = knowledgeItems.map((item, index) => {
         // 直接使用传入的类型，进行简单映射
-        let artifactType: ArtifactType = 'markdown' // 默认类型
+        let artifactType: ArtifactType
 
         // 直接使用 item.type
         if (item.type === 'webpage')
@@ -319,7 +351,7 @@ const ChatWrapper = () => {
           chatFooterClassName="pb-4"
           chatFooterInnerClassName={`mx-auto w-full max-w-[768px] ${isMobile ? 'px-2' : 'px-4'}`}
           onSend={doSend}
-          inputs={currentConversationId ? currentConversationItem?.inputs as any : newConversationInputs}
+          inputs={currentConversationId ? currentConversationInputs as any : newConversationInputs}
           inputsForm={inputsForms}
           onRegenerate={doRegenerate}
           onStopResponding={handleStop}

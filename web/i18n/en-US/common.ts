@@ -18,6 +18,7 @@ const translation = {
     cancel: 'Cancel',
     clear: 'Clear',
     save: 'Save',
+    update: 'Update',
     saveAndEnable: 'Save & Enable',
     edit: 'Edit',
     add: 'Add',
@@ -573,6 +574,23 @@ const translation = {
     thinking: 'Thinking...',
     thought: 'Thought',
     resend: 'Resend',
+    feedback: {
+      like: 'Helpful',
+      dislike: 'Not helpful',
+      dislikeModal: {
+        title: 'Feedback Issue',
+        placeholder: 'Please tell us what problems exist to help us improve...',
+        reasons: {
+          inaccurate: 'Answer is inaccurate',
+          slow: 'Retrieval is slow',
+          irrelevant: 'Answer is irrelevant',
+          incomplete: 'Answer is incomplete',
+          other: 'Other issues',
+        },
+        submit: 'Submit Feedback',
+        cancel: 'Cancel',
+      },
+    },
   },
   promptEditor: {
     placeholder: 'Write your prompt word here, enter \'{\' to insert a variable, enter \'/\' to insert a prompt content block',

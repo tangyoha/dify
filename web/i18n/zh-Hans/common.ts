@@ -18,6 +18,7 @@ const translation = {
     cancel: '取消',
     clear: '清空',
     save: '保存',
+    update: '更新',
     saveAndEnable: '保存并启用',
     edit: '编辑',
     add: '添加',
@@ -573,6 +574,25 @@ const translation = {
     thinking: '深度思考中...',
     thought: '已深度思考',
     resend: '重新发送',
+    feedback: {
+      like: '有用',
+      dislike: '无用',
+      dislikeModal: {
+        title: '反馈问题',
+        selectReason: '请选择问题类型：',
+        description: '详细描述（可选）：',
+        placeholder: '请告诉我们哪里存在问题，帮助我们改进...',
+        reasons: {
+          inaccurate: '答案不准确',
+          slow: '检索效率慢',
+          irrelevant: '回答不相关',
+          incomplete: '回答不完整',
+          other: '其他问题',
+        },
+        submit: '提交反馈',
+        cancel: '取消',
+      },
+    },
   },
   promptEditor: {
     placeholder: '在这里写你的提示词，输入\'{\' 插入变量、输入\'/\' 插入提示内容块',
@@ -670,7 +690,7 @@ const translation = {
       listView: '列表视图',
       gridView: '网格视图',
       close: '关闭面板',
-    }
+    },
   },
   imageInput: {
     dropImageHere: '将图片拖放到此处，或',

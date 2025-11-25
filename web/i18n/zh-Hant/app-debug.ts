@@ -253,6 +253,7 @@ const translation = {
     'text-input': '文字',
     'paragraph': '段落',
     'select': '下拉選項',
+    'radio': '單選按鈕',
     'number': '數字',
     'notSet': '未設定，在 Prompt 中輸入 {{input}} 試試',
     'stringTitle': '文字框設定',

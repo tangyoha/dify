@@ -8,7 +8,7 @@ const translation = {
     newChat: '开启新对话',
     newChatTip: '已在新对话中',
     chatSettingsTitle: '新对话设置',
-    chatFormTip: '对话开始后，对话设置将无法修改。',
+    chatFormTip: '您可以随时修改对话设置，更改将在下次消息中生效。',
     pinnedTitle: '已置顶',
     unpinnedTitle: '对话列表',
     newChatDefaultName: '新的对话',
@@ -18,7 +18,7 @@ const translation = {
     prompt: '提示词',
     privatePromptConfigTitle: '对话设置',
     publicPromptConfigTitle: '对话前提示词',
-    configStatusDes: '开始前，您可以修改对话设置',
+    configStatusDes: '您可以修改对话设置，更改将在下次消息中生效。',
     configDisabled: '此次会话已使用上次会话表单',
     startChat: '开始对话',
     privacyPolicyLeft: '请阅读由该应用开发者提供的',
@@ -32,6 +32,10 @@ const translation = {
     temporarySystemIssue: '抱歉，临时系统问题。',
     expand: '展开',
     collapse: '折叠',
+    userIdentifier: '用户标识',
+    currentUser: '当前用户',
+    userIdPlaceholder: '请输入您的用户名或ID',
+    userIdTip: '用于区分不同用户的使用情况，便于统计和分析。留空将使用默认用户。',
   },
   generation: {
     tabs: {

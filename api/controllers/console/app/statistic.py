@@ -505,6 +505,133 @@ WHERE
         return jsonify({"data": response_data})
 
 
+class ResponseTimeTrendStatistic(Resource):
+    @setup_required
+    @login_required
+    @account_initialization_required
+    @get_app_model
+    def get(self, app_model):
+        account = current_user
+
+        parser = reqparse.RequestParser()
+        parser.add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        parser.add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        args = parser.parse_args()
+
+        sql_query = """SELECT
+    DATE(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+    CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (SUM(provider_response_latency) / COUNT(*))
+    END as avg_response_time
+FROM
+    messages
+WHERE
+    app_id = :app_id
+    AND provider_response_latency IS NOT NULL
+    AND provider_response_latency > 0"""
+        arg_dict = {"tz": account.timezone, "app_id": app_model.id}
+
+        timezone = pytz.timezone(account.timezone)
+        utc_timezone = pytz.utc
+
+        if args["start"]:
+            start_datetime = datetime.strptime(args["start"], "%Y-%m-%d %H:%M")
+            start_datetime = start_datetime.replace(second=0)
+
+            start_datetime_timezone = timezone.localize(start_datetime)
+            start_datetime_utc = start_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND created_at >= :start"
+            arg_dict["start"] = start_datetime_utc
+
+        if args["end"]:
+            end_datetime = datetime.strptime(args["end"], "%Y-%m-%d %H:%M")
+            end_datetime = end_datetime.replace(second=0)
+
+            end_datetime_timezone = timezone.localize(end_datetime)
+            end_datetime_utc = end_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND created_at < :end"
+            arg_dict["end"] = end_datetime_utc
+
+        sql_query += " GROUP BY date ORDER BY date"
+
+        response_data = []
+
+        with db.engine.begin() as conn:
+            rs = conn.execute(db.text(sql_query), arg_dict)
+            for i in rs:
+                response_data.append({"date": str(i.date), "response_time": round(i.avg_response_time, 2)})
+
+        return jsonify({"data": response_data})
+
+
+class DailyFeedbackStatistic(Resource):
+    @setup_required
+    @login_required
+    @account_initialization_required
+    @get_app_model
+    def get(self, app_model):
+        account = current_user
+
+        parser = reqparse.RequestParser()
+        parser.add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        parser.add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        args = parser.parse_args()
+
+        sql_query = """SELECT
+    DATE(DATE_TRUNC('day', mf.created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+    COUNT(CASE WHEN mf.rating = 'like' THEN 1 END) AS like_count,
+    COUNT(CASE WHEN mf.rating = 'dislike' THEN 1 END) AS dislike_count
+FROM
+    message_feedbacks mf
+INNER JOIN
+    messages m ON mf.message_id = m.id
+WHERE
+    m.app_id = :app_id
+    AND mf.from_source = 'user'"""
+        arg_dict = {"tz": account.timezone, "app_id": app_model.id}
+
+        timezone = pytz.timezone(account.timezone)
+        utc_timezone = pytz.utc
+
+        if args["start"]:
+            start_datetime = datetime.strptime(args["start"], "%Y-%m-%d %H:%M")
+            start_datetime = start_datetime.replace(second=0)
+
+            start_datetime_timezone = timezone.localize(start_datetime)
+            start_datetime_utc = start_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND mf.created_at >= :start"
+            arg_dict["start"] = start_datetime_utc
+
+        if args["end"]:
+            end_datetime = datetime.strptime(args["end"], "%Y-%m-%d %H:%M")
+            end_datetime = end_datetime.replace(second=0)
+
+            end_datetime_timezone = timezone.localize(end_datetime)
+            end_datetime_utc = end_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND mf.created_at < :end"
+            arg_dict["end"] = end_datetime_utc
+
+        sql_query += " GROUP BY date ORDER BY date"
+
+        response_data = []
+
+        with db.engine.begin() as conn:
+            rs = conn.execute(db.text(sql_query), arg_dict)
+            for i in rs:
+                response_data.append({
+                    "date": str(i.date),
+                    "like_count": int(i.like_count or 0),
+                    "dislike_count": int(i.dislike_count or 0)
+                })
+
+        return jsonify({"data": response_data})
+
+
 api.add_resource(DailyMessageStatistic, "/apps/<uuid:app_id>/statistics/daily-messages")
 api.add_resource(DailyConversationStatistic, "/apps/<uuid:app_id>/statistics/daily-conversations")
 api.add_resource(DailyTerminalsStatistic, "/apps/<uuid:app_id>/statistics/daily-end-users")
@@ -513,3 +640,5 @@ api.add_resource(AverageSessionInteractionStatistic, "/apps/<uuid:app_id>/statis
 api.add_resource(UserSatisfactionRateStatistic, "/apps/<uuid:app_id>/statistics/user-satisfaction-rate")
 api.add_resource(AverageResponseTimeStatistic, "/apps/<uuid:app_id>/statistics/average-response-time")
 api.add_resource(TokensPerSecondStatistic, "/apps/<uuid:app_id>/statistics/tokens-per-second")
+api.add_resource(ResponseTimeTrendStatistic, "/apps/<uuid:app_id>/statistics/response-time-trend")
+api.add_resource(DailyFeedbackStatistic, "/apps/<uuid:app_id>/statistics/daily-feedback")

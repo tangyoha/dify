@@ -24,4 +24,4 @@ export const KnowledgeBlock = ({ children, ...props }: any) => {
   }
 }
 
-export default KnowledgeBlock 
+export default KnowledgeBlock

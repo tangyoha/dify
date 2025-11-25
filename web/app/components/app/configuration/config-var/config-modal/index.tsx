@@ -137,7 +137,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
     if (isStringInput || type === InputVarType.number) {
       onConfirm(tempPayload, moreInfo)
     }
-    else if (type === InputVarType.select) {
+    else if (type === InputVarType.select || type === InputVarType.radio) {
       if (options?.length === 0) {
         Toast.notify({ type: 'error', message: t('appDebug.variableConfig.errorMsg.atLeastOneOption') })
         return
@@ -189,6 +189,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
               <SelectTypeItem type={InputVarType.textInput} selected={type === InputVarType.textInput} onClick={handleTypeChange(InputVarType.textInput)} />
               <SelectTypeItem type={InputVarType.paragraph} selected={type === InputVarType.paragraph} onClick={handleTypeChange(InputVarType.paragraph)} />
               <SelectTypeItem type={InputVarType.select} selected={type === InputVarType.select} onClick={handleTypeChange(InputVarType.select)} />
+              <SelectTypeItem type={InputVarType.radio} selected={type === InputVarType.radio} onClick={handleTypeChange(InputVarType.radio)} />
               <SelectTypeItem type={InputVarType.number} selected={type === InputVarType.number} onClick={handleTypeChange(InputVarType.number)} />
               {supportFile && <>
                 <SelectTypeItem type={InputVarType.singleFile} selected={type === InputVarType.singleFile} onClick={handleTypeChange(InputVarType.singleFile)} />
@@ -219,7 +220,7 @@ const ConfigModal: FC<IConfigModalProps> = ({
             </Field>
 
           )}
-          {type === InputVarType.select && (
+          {(type === InputVarType.select || type === InputVarType.radio) && (
             <Field title={t('appDebug.variableConfig.options')}>
               <ConfigSelect options={options || []} onChange={handlePayloadChange('options')} />
             </Field>

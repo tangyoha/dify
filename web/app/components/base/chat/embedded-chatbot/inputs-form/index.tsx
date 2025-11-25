@@ -45,7 +45,7 @@ const InputsFormNode = ({
           {collapsed && (
             <Button className='uppercase text-text-tertiary' size='small' variant='ghost' onClick={() => setCollapsed(false)}>{t('common.operation.edit')}</Button>
           )}
-          {!collapsed && currentConversationId && (
+          {!collapsed && (
             <Button className='uppercase text-text-tertiary' size='small' variant='ghost' onClick={() => setCollapsed(true)}>{t('common.operation.close')}</Button>
           )}
         </div>
@@ -68,6 +68,26 @@ const InputsFormNode = ({
                   : {}
               }
             >{t('share.chat.startChat')}</Button>
+          </div>
+        )}
+        {!collapsed && currentConversationId && (
+          <div className={cn('p-6 border-t border-divider-subtle', isMobile && 'p-4')}>
+            <div className='system-xs-regular text-text-tertiary mb-3'>
+              {t('share.chat.chatFormTip')}
+            </div>
+            <Button
+              variant='secondary'
+              className='w-full'
+              onClick={() => setCollapsed(true)}
+              style={
+                themeBuilder?.theme
+                  ? {
+                    borderColor: themeBuilder?.theme.primaryColor,
+                    color: themeBuilder?.theme.primaryColor,
+                  }
+                  : {}
+              }
+            >{t('common.operation.confirm')}</Button>
           </div>
         )}
       </div>

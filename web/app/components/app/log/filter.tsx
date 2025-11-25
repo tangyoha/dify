@@ -1,16 +1,18 @@
 'use client'
 import type { FC } from 'react'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
-import { RiCalendarLine } from '@remixicon/react'
+import { RiCalendarLine, RiUser3Line } from '@remixicon/react'
 import quarterOfYear from 'dayjs/plugin/quarterOfYear'
 import type { QueryParam } from './index'
 import Chip from '@/app/components/base/chip'
 import Input from '@/app/components/base/input'
 import Sort from '@/app/components/base/sort'
+import DatePicker from '@/app/components/base/date-and-time-picker/date-picker'
 import { fetchAnnotationsCount } from '@/service/log'
+import { get } from '@/service/base'
 dayjs.extend(quarterOfYear)
 
 const today = dayjs()
@@ -36,7 +38,72 @@ type IFilterProps = {
 
 const Filter: FC<IFilterProps> = ({ isChatMode, appId, queryParams, setQueryParams }: IFilterProps) => {
   const { data } = useSWR({ url: `/apps/${appId}/annotations/count` }, fetchAnnotationsCount)
+  const { data: userListData } = useSWR<{ users: Array<{ id: string; name: string; external_user_id: string; is_anonymous: boolean }> }>(
+    `/apps/${appId}/users`,
+    get,
+    {
+      refreshInterval: 60000, // 每分钟刷新一次用户列表
+    },
+  )
   const { t } = useTranslation()
+
+  // Custom date range state
+  const [isCustomRange, setIsCustomRange] = useState(queryParams.period === 'custom')
+  const [customStartDate, setCustomStartDate] = useState<dayjs.Dayjs | undefined>(
+    queryParams.start_date ? dayjs(queryParams.start_date, 'YYYY-MM-DD HH:mm') : undefined
+  )
+  const [customEndDate, setCustomEndDate] = useState<dayjs.Dayjs | undefined>(
+    queryParams.end_date ? dayjs(queryParams.end_date, 'YYYY-MM-DD HH:mm') : undefined
+  )
+
+  // 获取用户显示名称，支持映射
+  const getUserDisplayName = (userId: string, userName?: string) => {
+    if (userName) return userName
+
+    // 从localStorage获取用户ID映射
+    const userMappings = JSON.parse(localStorage.getItem('user_id_mappings') || '{}')
+    if (userMappings[userId]) {
+      return userMappings[userId]
+    }
+
+    // 如果没有映射，显示简化的用户ID
+    if (userId.length > 20 && userId.includes('-')) {
+      return `用户${userId.slice(0, 8)}`
+    }
+
+    return userId
+  }
+
+  // Handle custom date range changes
+  const handleCustomDateChange = () => {
+    if (customStartDate && customEndDate) {
+      const start = customStartDate.startOf('day').format('YYYY-MM-DD HH:mm')
+      const end = customEndDate.endOf('day').format('YYYY-MM-DD HH:mm')
+      setQueryParams({
+        ...queryParams,
+        period: 'custom',
+        start_date: start,
+        end_date: end
+      })
+    }
+  }
+
+  // Update query params when custom dates change
+  useEffect(() => {
+    if (isCustomRange && customStartDate && customEndDate) {
+      handleCustomDateChange()
+    }
+  }, [customStartDate, customEndDate, isCustomRange])
+
+  // 构建用户选项列表
+  const userOptions = [
+    { value: '', name: t('appLog.filter.user.all') },
+    ...(userListData?.users || []).map(user => ({
+      value: user.id,
+      name: getUserDisplayName(user.id, user.name || user.external_user_id)
+    }))
+  ]
+
   if (!data)
     return null
   return (
@@ -47,11 +114,59 @@ const Filter: FC<IFilterProps> = ({ isChatMode, appId, queryParams, setQueryPara
         leftIcon={<RiCalendarLine className='h-4 w-4 text-text-secondary' />}
         value={queryParams.period}
         onSelect={(item) => {
-          setQueryParams({ ...queryParams, period: item.value })
+          if (item.value === 'custom') {
+            setIsCustomRange(true)
+            setQueryParams({ ...queryParams, period: 'custom' })
+            return
+          }
+          setIsCustomRange(false)
+          setQueryParams({
+            ...queryParams,
+            period: item.value,
+            start_date: undefined,
+            end_date: undefined
+          })
         }}
-        onClear={() => setQueryParams({ ...queryParams, period: '9' })}
-        items={Object.entries(TIME_PERIOD_MAPPING).map(([k, v]) => ({ value: k, name: t(`appLog.filter.period.${v.name}`) }))}
+        onClear={() => {
+          setIsCustomRange(false)
+          setQueryParams({
+            ...queryParams,
+            period: '9',
+            start_date: undefined,
+            end_date: undefined
+          })
+        }}
+        items={[
+          ...Object.entries(TIME_PERIOD_MAPPING).map(([k, v]) => ({ value: k, name: t(`appLog.filter.period.${v.name}`) })),
+          {
+            value: 'custom',
+            name: queryParams.period === 'custom' && customStartDate && customEndDate
+              ? `${customStartDate.format('YYYY-MM-DD')} - ${customEndDate.format('YYYY-MM-DD')}`
+              : t('appLog.filter.period.custom')
+          }
+        ]}
       />
+
+      {isCustomRange && (
+        <div className='flex items-center gap-2'>
+          <DatePicker
+            value={customStartDate}
+            onChange={setCustomStartDate}
+            onClear={() => setCustomStartDate(undefined)}
+            placeholder={t('appLog.filter.startDate')}
+            needTimePicker={false}
+          />
+          <span className='text-text-tertiary'>-</span>
+          <DatePicker
+            value={customEndDate}
+            onChange={setCustomEndDate}
+            onClear={() => setCustomEndDate(undefined)}
+            placeholder={t('appLog.filter.endDate')}
+            needTimePicker={false}
+          />
+        </div>
+      )}
+
       <Chip
         className='min-w-[150px]'
         panelClassName='w-[270px]'
@@ -66,6 +181,34 @@ const Filter: FC<IFilterProps> = ({ isChatMode, appId, queryParams, setQueryPara
           { value: 'annotated', name: t('appLog.filter.annotation.annotated', { count: data?.count }) },
           { value: 'not_annotated', name: t('appLog.filter.annotation.not_annotated') },
         ]}
+      />
+
+      <Chip
+        className='min-w-[150px]'
+        panelClassName='w-[270px]'
+        showLeftIcon={false}
+        value={queryParams.user_feedback_status || 'all'}
+        onSelect={(item) => {
+          setQueryParams({ ...queryParams, user_feedback_status: item.value as string })
+        }}
+        onClear={() => setQueryParams({ ...queryParams, user_feedback_status: 'all' })}
+        items={[
+          { value: 'all', name: t('appLog.filter.userFeedback.all') },
+          { value: 'liked', name: t('appLog.filter.userFeedback.liked') },
+          { value: 'disliked', name: t('appLog.filter.userFeedback.disliked') },
+          { value: 'no_feedback', name: t('appLog.filter.userFeedback.no_feedback') },
+        ]}
+      />
+      <Chip
+        className='min-w-[150px]'
+        panelClassName='w-[270px]'
+        leftIcon={<RiUser3Line className='h-4 w-4 text-text-secondary' />}
+        value={queryParams.user_id || ''}
+        onSelect={(item) => {
+          setQueryParams({ ...queryParams, user_id: item.value as string })
+        }}
+        onClear={() => setQueryParams({ ...queryParams, user_id: '' })}
+        items={userOptions}
       />
       <Input
         wrapperClassName='w-[200px]'

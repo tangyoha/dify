@@ -20,6 +20,7 @@ import EditReplyModal from '@/app/components/app/annotation/edit-annotation-moda
 import Log from '@/app/components/base/chat/chat/log'
 import ActionButton, { ActionButtonState } from '@/app/components/base/action-button'
 import NewAudioButton from '@/app/components/base/new-audio-button'
+import FeedbackModal from './feedback-modal'
 import cn from '@/utils/classnames'
 
 type OperationProps = {
@@ -52,6 +53,7 @@ const Operation: FC<OperationProps> = ({
     onRegenerate,
   } = useChatContext()
   const [isShowReplyModal, setIsShowReplyModal] = useState(false)
+  const [isShowFeedbackModal, setIsShowFeedbackModal] = useState(false)
   const {
     id,
     isOpeningStatement,
@@ -74,8 +76,24 @@ const Operation: FC<OperationProps> = ({
     if (!config?.supportFeedback || !onFeedback)
       return
 
+    if (rating === 'dislike') {
+      setIsShowFeedbackModal(true)
+      return
+    }
+
     await onFeedback?.(id, { rating })
     setLocalFeedback({ rating })
+  }
+
+  const handleFeedbackSubmit = async (feedbackData: { reason: string; content: string }) => {
+    if (!config?.supportFeedback || !onFeedback)
+      return
+
+    await onFeedback?.(id, {
+      rating: 'dislike',
+      content: `${feedbackData.reason}: ${feedbackData.content}`.trim()
+    })
+    setLocalFeedback({ rating: 'dislike' })
   }
 
   const operationWidth = useMemo(() => {
@@ -147,14 +165,24 @@ const Operation: FC<OperationProps> = ({
           </div>
         )}
         {!isOpeningStatement && config?.supportFeedback && !localFeedback?.rating && onFeedback && (
-          <div className='ml-1 hidden items-center gap-0.5 rounded-[10px] border-[0.5px] border-components-actionbar-border bg-components-actionbar-bg p-0.5 shadow-md backdrop-blur-sm group-hover:flex'>
+          <div className='ml-1 hidden items-center gap-1 rounded-[10px] border-[0.5px] border-components-actionbar-border bg-components-actionbar-bg p-0.5 shadow-md backdrop-blur-sm group-hover:flex'>
             {!localFeedback?.rating && (
               <>
-                <ActionButton onClick={() => handleFeedback('like')}>
-                  <RiThumbUpLine className='h-4 w-4' />
+                <ActionButton
+                  onClick={() => handleFeedback('like')}
+                  className="!w-auto flex items-center gap-1 px-2 py-1 whitespace-nowrap"
+                  title={t('common.chat.feedback.like')}
+                >
+                  <RiThumbUpLine className='h-4 w-4 flex-shrink-0' />
+                  <span className="text-xs text-components-actionbar-text">{t('common.chat.feedback.like')}</span>
                 </ActionButton>
-                <ActionButton onClick={() => handleFeedback('dislike')}>
-                  <RiThumbDownLine className='h-4 w-4' />
+                <ActionButton
+                  onClick={() => handleFeedback('dislike')}
+                  className="!w-auto flex items-center gap-1 px-2 py-1 whitespace-nowrap"
+                  title={t('common.chat.feedback.dislike')}
+                >
+                  <RiThumbDownLine className='h-4 w-4 flex-shrink-0' />
+                  <span className="text-xs text-components-actionbar-text">{t('common.chat.feedback.dislike')}</span>
                 </ActionButton>
               </>
             )}
@@ -187,6 +215,11 @@ const Operation: FC<OperationProps> = ({
         annotationId={annotation?.id || ''}
         createdAt={annotation?.created_at}
         onRemove={() => onAnnotationRemoved?.(index)}
+      />
+      <FeedbackModal
+        isShow={isShowFeedbackModal}
+        onClose={() => setIsShowFeedbackModal(false)}
+        onSubmit={handleFeedbackSubmit}
       />
     </>
   )

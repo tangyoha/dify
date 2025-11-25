@@ -124,6 +124,10 @@ export type AppTokenCostsResponse = {
   data: Array<{ date: string; token_count: number; total_price: number; currency: number }>
 }
 
+export type AppDailyFeedbackResponse = {
+  data: Array<{ date: string; like_count: number; dislike_count: number }>
+}
+
 export type UpdateAppModelConfigResponse = { result: string }
 
 export type ApiKeyItemResponse = {

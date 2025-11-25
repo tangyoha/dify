@@ -833,6 +833,15 @@ class Conversation(Base):
         return None
 
     @property
+    def from_end_external_user_id(self):
+        if self.from_end_user_id:
+            end_user = db.session.query(EndUser).filter(EndUser.id == self.from_end_user_id).first()
+            if end_user:
+                return end_user.external_user_id
+
+        return None
+
+    @property
     def from_account_name(self):
         if self.from_account_id:
             account = db.session.query(Account).filter(Account.id == self.from_account_id).first()

@@ -25,6 +25,10 @@ export type QueryParam = {
   annotation_status?: string
   keyword?: string
   sort_by?: string
+  user_id?: string
+  start_date?: string
+  end_date?: string
+  user_feedback_status?: string
 }
 
 const ThreeDotsIcon = ({ className }: SVGProps<SVGElement>) => {
@@ -57,6 +61,7 @@ const Logs: FC<ILogsProps> = ({ appDetail }) => {
     period: '2',
     annotation_status: 'all',
     sort_by: '-created_at',
+    user_feedback_status: 'all',
   })
   const [currPage, setCurrPage] = React.useState<number>(0)
   const [limit, setLimit] = React.useState<number>(APP_PAGE_LIMIT)
@@ -68,14 +73,19 @@ const Logs: FC<ILogsProps> = ({ appDetail }) => {
   const query = {
     page: currPage + 1,
     limit,
-    ...((debouncedQueryParams.period !== '9')
+    ...((debouncedQueryParams.period === 'custom' && debouncedQueryParams.start_date && debouncedQueryParams.end_date)
       ? {
-        start: dayjs().subtract(TIME_PERIOD_MAPPING[debouncedQueryParams.period].value, 'day').startOf('day').format('YYYY-MM-DD HH:mm'),
-        end: dayjs().endOf('day').format('YYYY-MM-DD HH:mm'),
+        start: debouncedQueryParams.start_date,
+        end: debouncedQueryParams.end_date,
       }
-      : {}),
+      : (debouncedQueryParams.period !== '9' && TIME_PERIOD_MAPPING[debouncedQueryParams.period])
+        ? {
+          start: dayjs().subtract(TIME_PERIOD_MAPPING[debouncedQueryParams.period].value, 'day').startOf('day').format('YYYY-MM-DD HH:mm'),
+          end: dayjs().endOf('day').format('YYYY-MM-DD HH:mm'),
+        }
+        : {}),
     ...(isChatMode ? { sort_by: debouncedQueryParams.sort_by } : {}),
-    ...omit(debouncedQueryParams, ['period']),
+    ...omit(debouncedQueryParams, ['period', 'start_date', 'end_date']),
   }
 
   const getWebAppType = (appType: AppMode) => {

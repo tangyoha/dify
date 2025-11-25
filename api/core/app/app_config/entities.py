@@ -92,6 +92,7 @@ class PromptTemplateEntity(BaseModel):
 class VariableEntityType(StrEnum):
     TEXT_INPUT = "text-input"
     SELECT = "select"
+    RADIO = "radio"
     PARAGRAPH = "paragraph"
     NUMBER = "number"
     EXTERNAL_DATA_TOOL = "external_data_tool"

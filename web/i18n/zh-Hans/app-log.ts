@@ -13,6 +13,7 @@ const translation = {
       messageCount: '消息数',
       userRate: '用户反馈',
       adminRate: '管理员反馈',
+      feedbackDetails: '反馈详情',
       startTime: '开始时间',
       status: '状态',
       runtime: '运行时间',
@@ -24,6 +25,7 @@ const translation = {
       previous: '上一页',
       next: '下一页',
     },
+    viewDetails: '查看详情',
     empty: {
       noChat: '未开始的对话',
       noOutput: '无输出',
@@ -54,6 +56,16 @@ const translation = {
     uploadImages: '上传的图片',
     modelParams: '模型参数',
   },
+  feedbackDetails: {
+    title: '反馈详情',
+    totalCount: '总计 {{count}} 条反馈',
+    problemBreakdown: '问题分类统计',
+    recentFeedback: '最近反馈',
+    fromUser: '用户',
+    fromAdmin: '管理员',
+    problemType: '问题类型',
+    description: '详细描述',
+  },
   filter: {
     period: {
       today: '今天',
@@ -65,11 +77,23 @@ const translation = {
       quarterToDate: '本季度至今',
       yearToDate: '本年至今',
       allTime: '所有时间',
+      custom: '自定义范围',
     },
+    startDate: '开始日期',
+    endDate: '结束日期',
     annotation: {
       all: '全部',
       annotated: '已标注改进（{{count}} 项）',
       not_annotated: '未标注',
+    },
+    userFeedback: {
+      all: '全部',
+      liked: '已解决（用户点赞）',
+      disliked: '未解决（用户点踩）',
+      no_feedback: '未反馈（什么也没点）',
+    },
+    user: {
+      all: '所有用户',
     },
     sortBy: '排序：',
     descending: '降序',

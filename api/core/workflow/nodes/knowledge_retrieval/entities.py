@@ -132,3 +132,10 @@ class KnowledgeRetrievalNodeData(BaseNodeData):
     metadata_model_config: Optional[ModelConfig] = None
     metadata_filtering_conditions: Optional[MetadataFilteringCondition] = None
     vision: VisionConfig = Field(default_factory=VisionConfig)
+    structured_output: dict | None = None
+    # We used 'structured_output_enabled' in the past, but it's not a good name.
+    structured_output_switch_on: bool = Field(False, alias="structured_output_enabled")
+
+    @property
+    def structured_output_enabled(self) -> bool:
+        return self.structured_output_switch_on and self.structured_output is not None

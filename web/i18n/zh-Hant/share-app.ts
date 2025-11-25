@@ -14,7 +14,7 @@ const translation = {
     prompt: '提示詞',
     privatePromptConfigTitle: '對話設定',
     publicPromptConfigTitle: '對話前提示詞',
-    configStatusDes: '開始前，您可以修改對話設定',
+    configStatusDes: '您可以修改對話設定，更改將在下次訊息中生效。',
     configDisabled: '此次會話已使用上次會話表單',
     startChat: '開始對話',
     privacyPolicyLeft: '請閱讀由該應用開發者提供的',
@@ -30,7 +30,7 @@ const translation = {
     collapse: '摺疊',
     newChatTip: '已經在一個新聊天中',
     chatSettingsTitle: '新的聊天設置',
-    chatFormTip: '聊天設定在聊天開始後無法修改。',
+    chatFormTip: '您可以隨時修改對話設定，更改將在下次訊息中生效。',
     viewChatSettings: '查看聊天設定',
   },
   generation: {

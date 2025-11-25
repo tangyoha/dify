@@ -193,6 +193,60 @@ class MessageService:
         return [record.to_dict() for record in feedbacks]
 
     @classmethod
+    def get_conversation_feedbacks_summary(cls, conversation_id: str):
+        """Get detailed feedback summary for a conversation"""
+        feedbacks = (
+            db.session.query(MessageFeedback)
+            .filter(MessageFeedback.conversation_id == conversation_id)
+            .order_by(MessageFeedback.created_at.desc())
+            .all()
+        )
+
+        # Parse and categorize feedbacks
+        feedback_summary = {
+            "total_count": len(feedbacks),
+            "user_feedbacks": [],
+            "admin_feedbacks": [],
+            "problem_breakdown": {
+                "inaccurate": 0,
+                "slow": 0,
+                "irrelevant": 0,
+                "incomplete": 0,
+                "other": 0
+            }
+        }
+
+        for feedback in feedbacks:
+            feedback_data = {
+                "id": feedback.id,
+                "rating": feedback.rating,
+                "content": feedback.content,
+                "created_at": int(feedback.created_at.timestamp()) if feedback.created_at else None,
+                "from_source": feedback.from_source
+            }
+
+            # Parse problem type from content
+            if feedback.content and feedback.rating == "dislike":
+                content = str(feedback.content)
+                if content.startswith("inaccurate:"):
+                    feedback_summary["problem_breakdown"]["inaccurate"] += 1
+                elif content.startswith("slow:"):
+                    feedback_summary["problem_breakdown"]["slow"] += 1
+                elif content.startswith("irrelevant:"):
+                    feedback_summary["problem_breakdown"]["irrelevant"] += 1
+                elif content.startswith("incomplete:"):
+                    feedback_summary["problem_breakdown"]["incomplete"] += 1
+                else:
+                    feedback_summary["problem_breakdown"]["other"] += 1
+
+            if feedback.from_source == "user":
+                feedback_summary["user_feedbacks"].append(feedback_data)
+            else:
+                feedback_summary["admin_feedbacks"].append(feedback_data)
+
+        return feedback_summary
+
+    @classmethod
     def get_message(cls, app_model: App, user: Optional[Union[Account, EndUser]], message_id: str):
         message = (
             db.session.query(Message)

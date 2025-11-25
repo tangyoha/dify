@@ -234,7 +234,9 @@ class Workflow(Base):
         if to_old_structure:
             old_structure_variables = []
             for variable in variables:
-                old_structure_variables.append({variable["type"]: variable})
+                # Ensure variable has a 'type' field, default to 'text-input' if missing
+                variable_type = variable.get("type", "text-input")
+                old_structure_variables.append({variable_type: variable})
 
             return old_structure_variables
 

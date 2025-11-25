@@ -354,6 +354,7 @@ const translation = {
     'text-input': 'Short Text',
     'paragraph': 'Paragraph',
     'select': 'Select',
+    'radio': 'Radio',
     'number': 'Number',
     'single-file': 'Single File',
     'multi-files': 'File List',

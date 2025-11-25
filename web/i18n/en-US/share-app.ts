@@ -8,7 +8,7 @@ const translation = {
     newChat: 'Start New chat',
     newChatTip: 'Already in a new chat',
     chatSettingsTitle: 'New chat setup',
-    chatFormTip: 'Chat settings cannot be modified after the chat has started.',
+    chatFormTip: 'You can modify chat settings anytime. Changes will take effect in the next message.',
     pinnedTitle: 'Pinned',
     unpinnedTitle: 'Recent',
     newChatDefaultName: 'New conversation',
@@ -18,7 +18,7 @@ const translation = {
     prompt: 'Prompt',
     privatePromptConfigTitle: 'Conversation settings',
     publicPromptConfigTitle: 'Initial Prompt',
-    configStatusDes: 'Before starting, you can modify the conversation settings',
+    configStatusDes: 'You can modify conversation settings. Changes will take effect in the next message.',
     configDisabled:
       'Previous session settings have been used for this session.',
     startChat: 'Start Chat',
@@ -36,6 +36,10 @@ const translation = {
     temporarySystemIssue: 'Sorry, temporary system issue.',
     expand: 'Expand',
     collapse: 'Collapse',
+    userIdentifier: 'User Identifier',
+    currentUser: 'Current User',
+    userIdPlaceholder: 'Enter your username or ID',
+    userIdTip: 'Used to distinguish different users for usage statistics and analysis. Leave empty to use default user.',
   },
   generation: {
     tabs: {

@@ -4,7 +4,7 @@ import pytz  # pip install pytz
 from flask_login import current_user
 from flask_restful import Resource, marshal_with, reqparse
 from flask_restful.inputs import int_range
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import Forbidden, NotFound
 
@@ -21,8 +21,9 @@ from fields.conversation_fields import (
 )
 from libs.helper import DatetimeString
 from libs.login import login_required
-from models import Conversation, EndUser, Message, MessageAnnotation
+from models import Conversation, EndUser, Message, MessageAnnotation, MessageFeedback
 from models.model import AppMode
+from services.message_service import MessageService
 
 
 class CompletionConversationApi(Resource):
@@ -40,6 +41,9 @@ class CompletionConversationApi(Resource):
         parser.add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
         parser.add_argument(
             "annotation_status", type=str, choices=["annotated", "not_annotated", "all"], default="all", location="args"
+        )
+        parser.add_argument(
+            "user_feedback_status", type=str, choices=["liked", "disliked", "no_feedback", "all"], default="all", location="args"
         )
         parser.add_argument("page", type=int_range(1, 99999), default=1, location="args")
         parser.add_argument("limit", type=int_range(1, 100), default=20, location="args")
@@ -87,6 +91,38 @@ class CompletionConversationApi(Resource):
                 query.outerjoin(MessageAnnotation, MessageAnnotation.conversation_id == Conversation.id)
                 .group_by(Conversation.id)
                 .having(func.count(MessageAnnotation.id) == 0)
+            )
+
+        # Filter by user feedback status
+        if args["user_feedback_status"] == "liked":
+            query = query.join(
+                MessageFeedback,
+                and_(
+                    MessageFeedback.conversation_id == Conversation.id,
+                    MessageFeedback.from_source == "user",
+                    MessageFeedback.rating == "like"
+                )
+            )
+        elif args["user_feedback_status"] == "disliked":
+            query = query.join(
+                MessageFeedback,
+                and_(
+                    MessageFeedback.conversation_id == Conversation.id,
+                    MessageFeedback.from_source == "user",
+                    MessageFeedback.rating == "dislike"
+                )
+            )
+        elif args["user_feedback_status"] == "no_feedback":
+            query = (
+                query.outerjoin(
+                    MessageFeedback,
+                    and_(
+                        MessageFeedback.conversation_id == Conversation.id,
+                        MessageFeedback.from_source == "user"
+                    )
+                )
+                .group_by(Conversation.id)
+                .having(func.count(MessageFeedback.id) == 0)
             )
 
         query = query.order_by(Conversation.created_at.desc())
@@ -149,7 +185,11 @@ class ChatConversationApi(Resource):
         parser.add_argument(
             "annotation_status", type=str, choices=["annotated", "not_annotated", "all"], default="all", location="args"
         )
+        parser.add_argument(
+            "user_feedback_status", type=str, choices=["liked", "disliked", "no_feedback", "all"], default="all", location="args"
+        )
         parser.add_argument("message_count_gte", type=int_range(1, 99999), required=False, location="args")
+        parser.add_argument("user_id", type=str, required=False, location="args")
         parser.add_argument("page", type=int_range(1, 99999), required=False, default=1, location="args")
         parser.add_argument("limit", type=int_range(1, 100), required=False, default=20, location="args")
         parser.add_argument(
@@ -164,13 +204,28 @@ class ChatConversationApi(Resource):
 
         subquery = (
             db.session.query(
-                Conversation.id.label("conversation_id"), EndUser.session_id.label("from_end_user_session_id")
+                Conversation.id.label("conversation_id"),
+                EndUser.session_id.label("from_end_user_session_id"),
+                EndUser.id.label("from_end_user_id"),
+                EndUser.name.label("from_end_user_name"),
+                EndUser.external_user_id.label("from_end_user_external_id"),
+                EndUser.is_anonymous.label("from_end_user_is_anonymous")
             )
             .outerjoin(EndUser, Conversation.from_end_user_id == EndUser.id)
-            .subquery()
+            .subquery() 
         )
 
-        query = db.select(Conversation).where(Conversation.app_id == app_model.id)
+        query = (
+            db.select(
+                Conversation,
+                subquery.c.from_end_user_session_id,
+                subquery.c.from_end_user_name,
+                subquery.c.from_end_user_external_id,
+                subquery.c.from_end_user_is_anonymous
+            )
+            .outerjoin(subquery, subquery.c.conversation_id == Conversation.id)
+            .where(Conversation.app_id == app_model.id)
+        )
 
         if args["keyword"]:
             keyword_filter = "%{}%".format(args["keyword"])
@@ -179,7 +234,6 @@ class ChatConversationApi(Resource):
                     Message,
                     Message.conversation_id == Conversation.id,
                 )
-                .join(subquery, subquery.c.conversation_id == Conversation.id)
                 .filter(
                     or_(
                         Message.query.ilike(keyword_filter),
@@ -187,9 +241,10 @@ class ChatConversationApi(Resource):
                         Conversation.name.ilike(keyword_filter),
                         Conversation.introduction.ilike(keyword_filter),
                         subquery.c.from_end_user_session_id.ilike(keyword_filter),
+                        subquery.c.from_end_user_external_id.ilike(keyword_filter),
                     ),
                 )
-                .group_by(Conversation.id)
+                .group_by(Conversation.id, subquery.c.from_end_user_session_id, subquery.c.from_end_user_name, subquery.c.from_end_user_external_id, subquery.c.from_end_user_is_anonymous)
             )
 
         account = current_user
@@ -229,17 +284,71 @@ class ChatConversationApi(Resource):
         elif args["annotation_status"] == "not_annotated":
             query = (
                 query.outerjoin(MessageAnnotation, MessageAnnotation.conversation_id == Conversation.id)
-                .group_by(Conversation.id)
+                .group_by(
+                    Conversation.id,
+                    subquery.c.from_end_user_session_id,
+                    subquery.c.from_end_user_name,
+                    subquery.c.from_end_user_external_id,
+                    subquery.c.from_end_user_is_anonymous
+                )
                 .having(func.count(MessageAnnotation.id) == 0)
+            )
+
+        # Filter by user feedback status
+        if args["user_feedback_status"] == "liked":
+            query = query.join(
+                MessageFeedback,
+                and_(
+                    MessageFeedback.conversation_id == Conversation.id,
+                    MessageFeedback.from_source == "user",
+                    MessageFeedback.rating == "like"
+                )
+            )
+        elif args["user_feedback_status"] == "disliked":
+            query = query.join(
+                MessageFeedback,
+                and_(
+                    MessageFeedback.conversation_id == Conversation.id,
+                    MessageFeedback.from_source == "user",
+                    MessageFeedback.rating == "dislike"
+                )
+            )
+        elif args["user_feedback_status"] == "no_feedback":
+            query = (
+                query.outerjoin(
+                    MessageFeedback,
+                    and_(
+                        MessageFeedback.conversation_id == Conversation.id,
+                        MessageFeedback.from_source == "user"
+                    )
+                )
+                .group_by(
+                    Conversation.id,
+                    subquery.c.from_end_user_session_id,
+                    subquery.c.from_end_user_name,
+                    subquery.c.from_end_user_external_id,
+                    subquery.c.from_end_user_is_anonymous
+                )
+                .having(func.count(MessageFeedback.id) == 0)
             )
 
         if args["message_count_gte"] and args["message_count_gte"] >= 1:
             query = (
                 query.options(joinedload(Conversation.messages))  # type: ignore
                 .join(Message, Message.conversation_id == Conversation.id)
-                .group_by(Conversation.id)
+                .group_by(
+                    Conversation.id,
+                    subquery.c.from_end_user_session_id,
+                    subquery.c.from_end_user_name,
+                    subquery.c.from_end_user_external_id,
+                    subquery.c.from_end_user_is_anonymous
+                )
                 .having(func.count(Message.id) >= args["message_count_gte"])
             )
+
+        # 添加用户筛选
+        if args["user_id"]:
+            query = query.where(Conversation.from_end_user_id == args["user_id"])
 
         if app_model.mode == AppMode.ADVANCED_CHAT.value:
             query = query.where(Conversation.invoke_from != InvokeFrom.DEBUGGER.value)
@@ -257,6 +366,8 @@ class ChatConversationApi(Resource):
                 query = query.order_by(Conversation.created_at.desc())
 
         conversations = db.paginate(query, page=args["page"], per_page=args["limit"], error_out=False)
+
+        # 处理查询结果，将额外的用户字段添加到Conversation对象上
 
         return conversations
 
@@ -298,12 +409,6 @@ class ChatConversationDetailApi(Resource):
         return {"result": "success"}, 204
 
 
-api.add_resource(CompletionConversationApi, "/apps/<uuid:app_id>/completion-conversations")
-api.add_resource(CompletionConversationDetailApi, "/apps/<uuid:app_id>/completion-conversations/<uuid:conversation_id>")
-api.add_resource(ChatConversationApi, "/apps/<uuid:app_id>/chat-conversations")
-api.add_resource(ChatConversationDetailApi, "/apps/<uuid:app_id>/chat-conversations/<uuid:conversation_id>")
-
-
 def _get_conversation(app_model, conversation_id):
     conversation = (
         db.session.query(Conversation)
@@ -320,3 +425,35 @@ def _get_conversation(app_model, conversation_id):
         db.session.commit()
 
     return conversation
+
+
+class ConversationFeedbackSummaryApi(Resource):
+    @setup_required
+    @login_required
+    @account_initialization_required
+    @get_app_model(mode=[AppMode.CHAT, AppMode.AGENT_CHAT, AppMode.ADVANCED_CHAT, AppMode.COMPLETION])
+    def get(self, app_model, conversation_id):
+        if not current_user.is_editor:
+            raise Forbidden()
+
+        conversation_id = str(conversation_id)
+
+        # Verify conversation exists and belongs to the app
+        conversation = (
+            db.session.query(Conversation)
+            .filter(Conversation.id == conversation_id, Conversation.app_id == app_model.id)
+            .first()
+        )
+
+        if not conversation:
+            raise NotFound("Conversation Not Exists.")
+
+        feedback_summary = MessageService.get_conversation_feedbacks_summary(conversation_id)
+        return {"result": "success", "data": feedback_summary}
+
+
+api.add_resource(CompletionConversationApi, "/apps/<uuid:app_id>/completion-conversations")
+api.add_resource(CompletionConversationDetailApi, "/apps/<uuid:app_id>/completion-conversations/<uuid:conversation_id>")
+api.add_resource(ChatConversationApi, "/apps/<uuid:app_id>/chat-conversations")
+api.add_resource(ChatConversationDetailApi, "/apps/<uuid:app_id>/chat-conversations/<uuid:conversation_id>")
+api.add_resource(ConversationFeedbackSummaryApi, "/apps/<uuid:app_id>/conversations/<uuid:conversation_id>/feedback-summary")
