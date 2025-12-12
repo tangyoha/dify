@@ -78,7 +78,6 @@ const ChatWrapper = (
     }
   }, [features.opening, features.suggested, features.text2speech, features.speech2text, features.citation, features.moderation, features.file])
   const setShowFeaturesPanel = useStore(s => s.setShowFeaturesPanel)
-  const setInputs = useStore(s => s.setInputs)
 
   const {
     conversationId,

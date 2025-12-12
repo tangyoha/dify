@@ -127,7 +127,7 @@ class BaseAppGenerator:
                 raise TypeError(f"expected value type int, float or str, got {type(value)}, value: {value}")
 
         match variable_entity.type:
-            case VariableEntityType.SELECT:
+            case VariableEntityType.SELECT | VariableEntityType.RADIO:
                 if value not in variable_entity.options:
                     raise ValueError(
                         f"{variable_entity.variable} in input form must be one of the following: "

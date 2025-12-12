@@ -311,6 +311,7 @@ const ChatWrapper = () => {
           /> : undefined
       }
     />
+    </KnowledgeProvider>
   )
 }
 

@@ -1,5 +1,8 @@
 from decimal import Decimal
 
+import pytz
+from datetime import datetime
+
 import sqlalchemy as sa
 from flask import abort, jsonify
 from flask_restx import Resource, fields, reqparse
@@ -518,18 +521,20 @@ WHERE
 
         return jsonify({"data": response_data})
 
-
+@console_ns.route("/apps/<uuid:app_id>/statistics/response-time-trend")
 class ResponseTimeTrendStatistic(Resource):
     @setup_required
     @login_required
     @account_initialization_required
     @get_app_model
     def get(self, app_model):
-        account = current_user
+        account, _ = current_account_with_tenant()
 
-        parser = reqparse.RequestParser()
-        parser.add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
-        parser.add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        parser = (
+            reqparse.RequestParser()
+            .add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+            .add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        )
         args = parser.parse_args()
 
         sql_query = """SELECT
@@ -580,18 +585,20 @@ WHERE
 
         return jsonify({"data": response_data})
 
-
+@console_ns.route("/apps/<uuid:app_id>/statistics/daily-feedback")
 class DailyFeedbackStatistic(Resource):
     @setup_required
     @login_required
     @account_initialization_required
     @get_app_model
     def get(self, app_model):
-        account = current_user
+        account, _ = current_account_with_tenant()
 
-        parser = reqparse.RequestParser()
-        parser.add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
-        parser.add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        parser = (
+            reqparse.RequestParser()
+            .add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+            .add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        )
         args = parser.parse_args()
 
         sql_query = """SELECT
@@ -644,15 +651,3 @@ WHERE
                 })
 
         return jsonify({"data": response_data})
-
-
-api.add_resource(DailyMessageStatistic, "/apps/<uuid:app_id>/statistics/daily-messages")
-api.add_resource(DailyConversationStatistic, "/apps/<uuid:app_id>/statistics/daily-conversations")
-api.add_resource(DailyTerminalsStatistic, "/apps/<uuid:app_id>/statistics/daily-end-users")
-api.add_resource(DailyTokenCostStatistic, "/apps/<uuid:app_id>/statistics/token-costs")
-api.add_resource(AverageSessionInteractionStatistic, "/apps/<uuid:app_id>/statistics/average-session-interactions")
-api.add_resource(UserSatisfactionRateStatistic, "/apps/<uuid:app_id>/statistics/user-satisfaction-rate")
-api.add_resource(AverageResponseTimeStatistic, "/apps/<uuid:app_id>/statistics/average-response-time")
-api.add_resource(TokensPerSecondStatistic, "/apps/<uuid:app_id>/statistics/tokens-per-second")
-api.add_resource(ResponseTimeTrendStatistic, "/apps/<uuid:app_id>/statistics/response-time-trend")
-api.add_resource(DailyFeedbackStatistic, "/apps/<uuid:app_id>/statistics/daily-feedback")

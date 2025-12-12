@@ -787,7 +787,8 @@ const translation = {
       listView: '列表视图',
       gridView: '网格视图',
       close: '关闭面板',
-    },
+    }
+  },
   avatar: {
     deleteTitle: '删除头像',
     deleteDescription: '确定要删除你的个人头像吗？你的账号将使用默认的首字母头像。',

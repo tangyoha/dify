@@ -9,7 +9,6 @@ feedback_fields = {
     "rating": fields.String,
     "content": fields.String,
 }
-}
 
 
 def build_feedback_model(api_or_ns: Api | Namespace):
@@ -79,3 +78,6 @@ message_infinite_scroll_pagination_fields = {
     "has_more": fields.Boolean,
     "data": fields.List(fields.Nested(message_fields)),
 }
+
+
+

@@ -1,5 +1,8 @@
+import pytz
+from datetime import datetime
+
 import sqlalchemy as sa
-from flask import abort
+from flask import abort, jsonify
 from flask_restx import Resource, fields, marshal_with, reqparse
 from flask_restx.inputs import int_range
 from sqlalchemy import and_, func, or_
@@ -12,6 +15,7 @@ from controllers.console.wraps import account_initialization_required, edit_perm
 from core.app.entities.app_invoke_entities import InvokeFrom
 from extensions.ext_database import db
 from fields.raws import FilesContainedField
+from fields.conversation_fields import MessageTextField
 from libs.datetime_utils import naive_utc_now, parse_time_range
 from libs.helper import DatetimeString, TimestampField
 from libs.login import current_account_with_tenant, login_required
@@ -527,7 +531,7 @@ class ChatConversationApi(Resource):
                 EndUser.id.label("from_end_user_id"),
                 EndUser.name.label("from_end_user_name"),
                 EndUser.external_user_id.label("from_end_user_external_id"),
-                EndUser.is_anonymous.label("from_end_user_is_anonymous")
+                EndUser._is_anonymous.label("from_end_user_is_anonymous")
             )
             .outerjoin(EndUser, Conversation.from_end_user_id == EndUser.id)
             .subquery() 
@@ -552,7 +556,6 @@ class ChatConversationApi(Resource):
                     Message,
                     Message.conversation_id == Conversation.id,
                 )
-                .join(subquery, subquery.c.conversation_id == Conversation.id)
                 .where(
                     or_(
                         Message.query.ilike(keyword_filter),
@@ -743,15 +746,14 @@ def _get_conversation(app_model, conversation_id):
 
     return conversation
 
-
+@console_ns.route("/apps/<uuid:app_id>/conversations/<uuid:conversation_id>/feedback-summary")
 class ConversationFeedbackSummaryApi(Resource):
     @setup_required
     @login_required
     @account_initialization_required
     @get_app_model(mode=[AppMode.CHAT, AppMode.AGENT_CHAT, AppMode.ADVANCED_CHAT, AppMode.COMPLETION])
     def get(self, app_model, conversation_id):
-        if not current_user.is_editor:
-            raise Forbidden()
+        current_user, _ = current_account_with_tenant()
 
         conversation_id = str(conversation_id)
 
@@ -769,8 +771,134 @@ class ConversationFeedbackSummaryApi(Resource):
         return {"result": "success", "data": feedback_summary}
 
 
-api.add_resource(CompletionConversationApi, "/apps/<uuid:app_id>/completion-conversations")
-api.add_resource(CompletionConversationDetailApi, "/apps/<uuid:app_id>/completion-conversations/<uuid:conversation_id>")
-api.add_resource(ChatConversationApi, "/apps/<uuid:app_id>/chat-conversations")
-api.add_resource(ChatConversationDetailApi, "/apps/<uuid:app_id>/chat-conversations/<uuid:conversation_id>")
-api.add_resource(ConversationFeedbackSummaryApi, "/apps/<uuid:app_id>/conversations/<uuid:conversation_id>/feedback-summary")
+@console_ns.route("/apps/<uuid:app_id>/statistics/response-time-trend")
+class ResponseTimeTrendStatistic(Resource):
+    @setup_required
+    @login_required
+    @account_initialization_required
+    @get_app_model
+    def get(self, app_model):
+        account, _ = current_account_with_tenant()
+
+        parser = (
+            reqparse.RequestParser()
+            .add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+            .add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        )
+        args = parser.parse_args()
+
+        sql_query = """SELECT
+    DATE(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+    CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (SUM(provider_response_latency) / COUNT(*))
+    END as avg_response_time
+FROM
+    messages
+WHERE
+    app_id = :app_id
+    AND provider_response_latency IS NOT NULL
+    AND provider_response_latency > 0"""
+        arg_dict = {"tz": account.timezone, "app_id": app_model.id}
+
+        timezone = pytz.timezone(account.timezone)
+        utc_timezone = pytz.utc
+
+        if args["start"]:
+            start_datetime = datetime.strptime(args["start"], "%Y-%m-%d %H:%M")
+            start_datetime = start_datetime.replace(second=0)
+
+            start_datetime_timezone = timezone.localize(start_datetime)
+            start_datetime_utc = start_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND created_at >= :start"
+            arg_dict["start"] = start_datetime_utc
+
+        if args["end"]:
+            end_datetime = datetime.strptime(args["end"], "%Y-%m-%d %H:%M")
+            end_datetime = end_datetime.replace(second=0)
+
+            end_datetime_timezone = timezone.localize(end_datetime)
+            end_datetime_utc = end_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND created_at < :end"
+            arg_dict["end"] = end_datetime_utc
+
+        sql_query += " GROUP BY date ORDER BY date"
+
+        response_data = []
+
+        with db.engine.begin() as conn:
+            rs = conn.execute(sa.text(sql_query), arg_dict)
+            for i in rs:
+                response_data.append({"date": str(i.date), "response_time": round(i.avg_response_time, 2)})
+
+        return jsonify({"data": response_data})
+
+
+@console_ns.route("/apps/<uuid:app_id>/statistics/daily-feedback")
+class DailyFeedbackStatistic(Resource):
+    @setup_required
+    @login_required
+    @account_initialization_required
+    @get_app_model
+    def get(self, app_model):
+        account, _ = current_account_with_tenant()
+
+        parser = (
+            reqparse.RequestParser()
+            .add_argument("start", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+            .add_argument("end", type=DatetimeString("%Y-%m-%d %H:%M"), location="args")
+        )
+        args = parser.parse_args()
+
+        sql_query = """SELECT
+    DATE(DATE_TRUNC('day', mf.created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+    COUNT(CASE WHEN mf.rating = 'like' THEN 1 END) AS like_count,
+    COUNT(CASE WHEN mf.rating = 'dislike' THEN 1 END) AS dislike_count
+FROM
+    message_feedbacks mf
+INNER JOIN
+    messages m ON mf.message_id = m.id
+WHERE
+    m.app_id = :app_id
+    AND mf.from_source = 'user'"""
+        arg_dict = {"tz": account.timezone, "app_id": app_model.id}
+
+        timezone = pytz.timezone(account.timezone)
+        utc_timezone = pytz.utc
+
+        if args["start"]:
+            start_datetime = datetime.strptime(args["start"], "%Y-%m-%d %H:%M")
+            start_datetime = start_datetime.replace(second=0)
+
+            start_datetime_timezone = timezone.localize(start_datetime)
+            start_datetime_utc = start_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND mf.created_at >= :start"
+            arg_dict["start"] = start_datetime_utc
+
+        if args["end"]:
+            end_datetime = datetime.strptime(args["end"], "%Y-%m-%d %H:%M")
+            end_datetime = end_datetime.replace(second=0)
+
+            end_datetime_timezone = timezone.localize(end_datetime)
+            end_datetime_utc = end_datetime_timezone.astimezone(utc_timezone)
+
+            sql_query += " AND mf.created_at < :end"
+            arg_dict["end"] = end_datetime_utc
+
+        sql_query += " GROUP BY date ORDER BY date"
+
+        response_data = []
+
+        with db.engine.begin() as conn:
+            rs = conn.execute(sa.text(sql_query), arg_dict)
+            for i in rs:
+                response_data.append({
+                    "date": str(i.date),
+                    "like_count": int(i.like_count or 0),
+                    "dislike_count": int(i.dislike_count or 0)
+                })
+
+        return jsonify({"data": response_data})

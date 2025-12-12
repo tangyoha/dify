@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask_restful import Resource, reqparse
+from flask_restx import Resource, fields, reqparse
 from sqlalchemy import func, desc, and_, or_ as sa_or
 import sqlalchemy as sa
 
@@ -458,7 +458,7 @@ class UserListApi(Resource):
             EndUser.name,
             EndUser.external_user_id,
             EndUser.session_id,
-            EndUser.is_anonymous,
+            EndUser._is_anonymous.label('is_anonymous'),
             EndUser.created_at
         ).filter(
             EndUser.app_id == app_model.id
