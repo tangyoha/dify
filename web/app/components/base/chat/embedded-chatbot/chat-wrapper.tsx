@@ -301,7 +301,6 @@ const ChatWrapper = () => {
       themeBuilder={themeBuilder}
       switchSibling={siblingMessageId => setTargetMessageId(siblingMessageId)}
       inputDisabled={inputDisabled}
-      isMobile={isMobile}
       questionIcon={
         initUserVariables?.avatar_url
           ? <Avatar
