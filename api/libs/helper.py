@@ -184,7 +184,7 @@ def timezone(timezone_string):
 def convert_datetime_to_date(field, target_timezone: str = ":tz"):
     if dify_config.DB_TYPE == "postgresql":
         return f"DATE(DATE_TRUNC('day', {field} AT TIME ZONE 'UTC' AT TIME ZONE {target_timezone}))"
-    elif dify_config.DB_TYPE == "mysql":
+    elif dify_config.DB_TYPE in ["mysql", "oceanbase", "seekdb"]:
         return f"DATE(CONVERT_TZ({field}, 'UTC', {target_timezone}))"
     else:
         raise NotImplementedError(f"Unsupported database type: {dify_config.DB_TYPE}")
@@ -215,7 +215,11 @@ def generate_text_hash(text: str) -> str:
 
 def compact_generate_response(response: Union[Mapping, Generator, RateLimitGenerator]) -> Response:
     if isinstance(response, dict):
-        return Response(response=json.dumps(jsonable_encoder(response)), status=200, mimetype="application/json")
+        return Response(
+            response=json.dumps(jsonable_encoder(response)),
+            status=200,
+            content_type="application/json; charset=utf-8",
+        )
     else:
 
         def generate() -> Generator:
