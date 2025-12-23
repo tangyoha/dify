@@ -34,6 +34,7 @@ from services.plugin.oauth_service import OAuthProxyService
 from services.tools.api_tools_manage_service import ApiToolManageService
 from services.tools.builtin_tools_manage_service import BuiltinToolManageService
 from services.tools.mcp_tools_manage_service import MCPToolManageService, OAuthDataType
+from services.tools.mcp_provider_metadata_service import MCPProviderMetadataService
 from services.tools.tool_labels_service import ToolLabelsService
 from services.tools.tools_manage_service import ToolCommonService
 from services.tools.tools_transform_service import ToolTransformService
@@ -1112,7 +1113,7 @@ class ToolMCPListAllApi(Resource):
         with Session(db.engine) as session, session.begin():
             service = MCPToolManageService(session=session)
             # Skip sensitive data decryption for list view to improve performance
-            tools = service.list_providers(tenant_id=tenant_id, include_sensitive=False)
+            tools = service.list_providers(tenant_id=tenant_id, for_list=True, include_sensitive=False)
 
             return [tool.to_dict() for tool in tools]
 
@@ -1131,6 +1132,104 @@ class ToolMCPUpdateApi(Resource):
                 provider_id=provider_id,
             )
             return jsonable_encoder(tools)
+
+
+parser_mcp_meta_get = (
+    reqparse.RequestParser()
+    .add_argument("provider_id", type=str, required=False, nullable=True, location="args")
+    .add_argument("server_identifier", type=str, required=False, nullable=True, location="args")
+)
+
+
+@console_ns.route("/workspaces/current/tool-provider/mcp/metadata")
+class ToolMCPMetadataApi(Resource):
+    @console_ns.expect(parser_mcp_meta_get)
+    @setup_required
+    @login_required
+    @account_initialization_required
+    def get(self):
+        _, tenant_id = current_account_with_tenant()
+        args = parser_mcp_meta_get.parse_args()
+
+        provider_id = args.get("provider_id")
+        server_identifier = args.get("server_identifier")
+
+        with Session(db.engine) as session, session.begin():
+            service = MCPProviderMetadataService(session=session)
+            if provider_id:
+                meta = service.get_by_provider_id(tenant_id=tenant_id, provider_id=provider_id)
+                if not meta:
+                    return {"provider_id": provider_id, "server_identifier": "", "description": "", "category_id": ""}
+                return {
+                    "provider_id": meta.provider_id,
+                    "server_identifier": meta.server_identifier,
+                    "description": meta.description,
+                    "category_id": meta.category_id,
+                }
+            if server_identifier:
+                meta = service.get_by_server_identifier(tenant_id=tenant_id, server_identifier=server_identifier)
+                if not meta:
+                    return {
+                        "provider_id": "",
+                        "server_identifier": server_identifier,
+                        "description": "",
+                        "category_id": "",
+                    }
+                return {
+                    "provider_id": meta.provider_id,
+                    "server_identifier": meta.server_identifier,
+                    "description": meta.description,
+                    "category_id": meta.category_id,
+                }
+
+            items = service.list_all(tenant_id=tenant_id)
+            return jsonable_encoder(
+                [
+                    {
+                        "provider_id": x.provider_id,
+                        "server_identifier": x.server_identifier,
+                        "description": x.description,
+                        "category_id": x.category_id,
+                    }
+                    for x in items
+                ]
+            )
+
+
+parser_mcp_meta_upsert = (
+    reqparse.RequestParser()
+    .add_argument("provider_id", type=str, required=True, nullable=False, location="json")
+    .add_argument("description", type=str, required=False, nullable=True, location="json", default="")
+    .add_argument("category_id", type=str, required=False, nullable=True, location="json", default="")
+)
+
+
+@console_ns.route("/workspaces/current/tool-provider/mcp/metadata/upsert")
+class ToolMCPMetadataUpsertApi(Resource):
+    @console_ns.expect(parser_mcp_meta_upsert)
+    @setup_required
+    @login_required
+    @account_initialization_required
+    def post(self):
+        _, tenant_id = current_account_with_tenant()
+        args = parser_mcp_meta_upsert.parse_args()
+
+        with Session(db.engine) as session, session.begin():
+            service = MCPProviderMetadataService(session=session)
+            meta = service.upsert(
+                tenant_id=tenant_id,
+                provider_id=args["provider_id"],
+                description=args.get("description", "") or "",
+                category_id=args.get("category_id", "") or "",
+            )
+            return jsonable_encoder(
+                {
+                    "provider_id": meta.provider_id,
+                    "server_identifier": meta.server_identifier,
+                    "description": meta.description,
+                    "category_id": meta.category_id,
+                }
+            )
 
 
 parser_cb = (

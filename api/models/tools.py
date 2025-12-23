@@ -366,6 +366,36 @@ class MCPToolProvider(TypeBase):
         return MCPProviderEntity.from_db_model(self)
 
 
+class MCPToolProviderMetadata(TypeBase):
+    __tablename__ = "tool_mcp_provider_metadata"
+    __table_args__ = (
+        sa.PrimaryKeyConstraint("id", name="tool_mcp_provider_metadata_pkey"),
+        sa.UniqueConstraint("tenant_id", "provider_id", name="unique_mcp_provider_metadata_tenant_provider"),
+        sa.UniqueConstraint(
+            "tenant_id", "server_identifier", name="unique_mcp_provider_metadata_tenant_server_identifier"
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(
+        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False
+    )
+    tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
+    provider_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
+    server_identifier: Mapped[str] = mapped_column(String(64), nullable=False)
+    description: Mapped[str] = mapped_column(LongText, nullable=False, server_default=sa.text("''"), default="")
+    category_id: Mapped[str] = mapped_column(String(64), nullable=False, server_default=sa.text("''"), default="")
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime, nullable=False, server_default=func.current_timestamp(), init=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        sa.DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+        init=False,
+    )
+
+
 class ToolModelInvoke(TypeBase):
     """
     store the invoke logs from tool invoke
