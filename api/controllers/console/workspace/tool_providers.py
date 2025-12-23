@@ -1159,12 +1159,21 @@ class ToolMCPMetadataApi(Resource):
             if provider_id:
                 meta = service.get_by_provider_id(tenant_id=tenant_id, provider_id=provider_id)
                 if not meta:
-                    return {"provider_id": provider_id, "server_identifier": "", "description": "", "category_id": ""}
+                    return {
+                        "provider_id": provider_id,
+                        "server_identifier": "",
+                        "description": "",
+                        "category_id": "",
+                        "productname": "",
+                        "product_name": "",
+                    }
                 return {
                     "provider_id": meta.provider_id,
                     "server_identifier": meta.server_identifier,
                     "description": meta.description,
                     "category_id": meta.category_id,
+                    "productname": meta.product_name,
+                    "product_name": meta.product_name,
                 }
             if server_identifier:
                 meta = service.get_by_server_identifier(tenant_id=tenant_id, server_identifier=server_identifier)
@@ -1174,12 +1183,16 @@ class ToolMCPMetadataApi(Resource):
                         "server_identifier": server_identifier,
                         "description": "",
                         "category_id": "",
+                        "productname": "",
+                        "product_name": "",
                     }
                 return {
                     "provider_id": meta.provider_id,
                     "server_identifier": meta.server_identifier,
                     "description": meta.description,
                     "category_id": meta.category_id,
+                    "productname": meta.product_name,
+                    "product_name": meta.product_name,
                 }
 
             items = service.list_all(tenant_id=tenant_id)
@@ -1190,6 +1203,8 @@ class ToolMCPMetadataApi(Resource):
                         "server_identifier": x.server_identifier,
                         "description": x.description,
                         "category_id": x.category_id,
+                        "productname": x.product_name,
+                        "product_name": x.product_name,
                     }
                     for x in items
                 ]
@@ -1201,6 +1216,8 @@ parser_mcp_meta_upsert = (
     .add_argument("provider_id", type=str, required=True, nullable=False, location="json")
     .add_argument("description", type=str, required=False, nullable=True, location="json", default="")
     .add_argument("category_id", type=str, required=False, nullable=True, location="json", default="")
+    .add_argument("productname", type=str, required=False, nullable=True, location="json", default="")
+    .add_argument("product_name", type=str, required=False, nullable=True, location="json", default="")
 )
 
 
@@ -1216,11 +1233,13 @@ class ToolMCPMetadataUpsertApi(Resource):
 
         with Session(db.engine) as session, session.begin():
             service = MCPProviderMetadataService(session=session)
+            product_name = (args.get("productname") or args.get("product_name") or "").strip()
             meta = service.upsert(
                 tenant_id=tenant_id,
                 provider_id=args["provider_id"],
                 description=args.get("description", "") or "",
                 category_id=args.get("category_id", "") or "",
+                product_name=product_name,
             )
             return jsonable_encoder(
                 {
@@ -1228,6 +1247,8 @@ class ToolMCPMetadataUpsertApi(Resource):
                     "server_identifier": meta.server_identifier,
                     "description": meta.description,
                     "category_id": meta.category_id,
+                    "productname": meta.product_name,
+                    "product_name": meta.product_name,
                 }
             )
 

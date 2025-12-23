@@ -384,6 +384,7 @@ class MCPToolProviderMetadata(TypeBase):
     server_identifier: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(LongText, nullable=False, server_default=sa.text("''"), default="")
     category_id: Mapped[str] = mapped_column(String(64), nullable=False, server_default=sa.text("''"), default="")
+    product_name: Mapped[str] = mapped_column(String(64), nullable=False, server_default=sa.text("''"), default="")
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime, nullable=False, server_default=func.current_timestamp(), init=False
     )

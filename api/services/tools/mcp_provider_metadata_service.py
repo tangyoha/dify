@@ -34,6 +34,7 @@ class MCPProviderMetadataService:
         provider_id: str,
         description: str,
         category_id: str = "",
+        product_name: str = "",
     ) -> MCPToolProviderMetadata:
         provider = self._session.scalar(
             select(MCPToolProvider).where(MCPToolProvider.tenant_id == tenant_id, MCPToolProvider.id == provider_id)
@@ -49,6 +50,7 @@ class MCPProviderMetadataService:
                 server_identifier=provider.server_identifier,
                 description=description or "",
                 category_id=category_id or "",
+                product_name=product_name or "",
             )
             self._session.add(meta)
             self._session.flush()
@@ -56,6 +58,7 @@ class MCPProviderMetadataService:
 
         meta.description = description or ""
         meta.category_id = category_id or ""
+        meta.product_name = product_name or ""
         meta.server_identifier = provider.server_identifier
         meta.updated_at = datetime.now()
         self._session.flush()
