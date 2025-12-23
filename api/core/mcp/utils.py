@@ -34,6 +34,7 @@ def create_ssrf_proxy_mcp_http_client(
             headers=headers or {},
             timeout=timeout,
             follow_redirects=True,
+            trust_env=False,
             proxy=dify_config.SSRF_PROXY_ALL_URL,
         )
     elif dify_config.SSRF_PROXY_HTTP_URL and dify_config.SSRF_PROXY_HTTPS_URL:
@@ -48,6 +49,7 @@ def create_ssrf_proxy_mcp_http_client(
             headers=headers or {},
             timeout=timeout,
             follow_redirects=True,
+            trust_env=False,
             mounts=proxy_mounts,
         )
     else:
@@ -56,6 +58,7 @@ def create_ssrf_proxy_mcp_http_client(
             headers=headers or {},
             timeout=timeout,
             follow_redirects=True,
+            trust_env=False,
         )
 
 

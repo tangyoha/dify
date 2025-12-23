@@ -288,6 +288,9 @@ def sse_client(
 
                 yield read_queue, write_queue
 
+    except httpx.RequestError as exc:
+        logger.warning("Error connecting to SSE endpoint: %s", exc)
+        raise MCPConnectionError() from exc
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 401:
             raise MCPAuthError(response=exc.response)
