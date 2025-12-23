@@ -1,7 +1,7 @@
 """add product_name to mcp provider metadata
 
 Revision ID: 7b4f9a3c2d10
-Revises: 3d2a1f6e9c01
+Revises: 160867b486cd
 Create Date: 2025-12-23 00:02:00.000000
 
 """
@@ -15,7 +15,7 @@ def _is_pg(conn):
 
 
 revision = "7b4f9a3c2d10"
-down_revision = "3d2a1f6e9c01"
+down_revision = "160867b486cd"
 branch_labels = None
 depends_on = None
 
