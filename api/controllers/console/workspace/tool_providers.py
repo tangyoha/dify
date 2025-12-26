@@ -1134,6 +1134,58 @@ class ToolMCPUpdateApi(Resource):
             return jsonable_encoder(tools)
 
 
+parser_mcp_invoke = (
+    reqparse.RequestParser()
+    .add_argument("provider_id", type=str, required=True, nullable=False, location="json")
+    .add_argument("tool_name", type=str, required=True, nullable=False, location="json")
+    .add_argument("arguments", type=dict, required=False, nullable=True, location="json", default={})
+)
+
+
+@console_ns.route("/workspaces/current/tool-provider/mcp/invoke")
+class ToolMCPInvokeApi(Resource):
+    @console_ns.expect(parser_mcp_invoke)
+    @setup_required
+    @login_required
+    @account_initialization_required
+    def post(self):
+        args = parser_mcp_invoke.parse_args()
+        provider_id = args["provider_id"]
+        tool_name = args["tool_name"]
+        tool_args = args.get("arguments") or {}
+        _, tenant_id = current_account_with_tenant()
+
+        # Get provider entity
+        with Session(db.engine) as session:
+            service = MCPToolManageService(session=session)
+            db_provider = service.get_provider(provider_id=provider_id, tenant_id=tenant_id)
+            provider_entity = db_provider.to_entity()
+
+        # Verify authentication
+        if not provider_entity.authed:
+            raise ValueError("Please authenticate the tool provider first")
+
+        # Prepare connection headers with auth token
+        server_url = provider_entity.decrypt_server_url()
+        headers = provider_entity.decrypt_headers()
+        tokens = provider_entity.retrieve_tokens()
+        if tokens:
+            headers["Authorization"] = f"{tokens.token_type.capitalize()} {tokens.access_token}"
+
+        # Invoke tool
+        try:
+            with MCPClient(
+                server_url=server_url,
+                headers=headers,
+                timeout=provider_entity.timeout,
+                sse_read_timeout=provider_entity.sse_read_timeout,
+            ) as mcp_client:
+                result = mcp_client.invoke_tool(tool_name, tool_args)
+                return jsonable_encoder(result.model_dump())
+        except MCPError as e:
+            raise ValueError(f"Failed to invoke tool: {e}") from e
+
+
 parser_mcp_meta_get = (
     reqparse.RequestParser()
     .add_argument("provider_id", type=str, required=False, nullable=True, location="args")
